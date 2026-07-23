@@ -1,0 +1,10 @@
+{
+  "name": "website",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ssg/build.mjs",
+    "dev": "node ssg/serve.mjs"
+  }
+}
