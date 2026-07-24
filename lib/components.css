@@ -1,0 +1,86 @@
+/* Styles for the built-in components in lib/site.typ (note/tip/warn, details,
+   blockquote, popover). Injected via the head channel only on pages that use a
+   component. Relies on the CSS variables defined in static/styles.css. */
+
+/* --- Callouts ------------------------------------------------------------- */
+.callout {
+  --callout-accent: var(--accent);
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--callout-accent);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--callout-accent) 8%, transparent);
+}
+.callout-tip  { --callout-accent: #2f9e6f; }
+.callout-warn { --callout-accent: #c9772f; }
+
+.callout-title {
+  margin: 0 0 0.35rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--callout-accent);
+}
+.callout-body > :first-child { margin-top: 0; }
+.callout-body > :last-child  { margin-bottom: 0; }
+
+/* --- Details (collapsible) ------------------------------------------------ */
+.details {
+  margin: 1.25rem 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+.details > summary {
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  list-style-position: inside;
+}
+.details[open] > summary { margin-bottom: 0.5rem; }
+.details-body > :first-child { margin-top: 0; }
+.details-body > :last-child  { margin-bottom: 0; }
+
+/* --- Blockquote ----------------------------------------------------------- */
+.quote {
+  margin: 1.5rem 0;
+  padding-left: 1.1rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+  font-style: italic;
+}
+.quote-body > :first-child { margin-top: 0; }
+.quote-body > :last-child  { margin-bottom: 0; }
+.quote-by {
+  margin-top: 0.4rem;
+  font-style: normal;
+  font-size: 0.85rem;
+}
+.quote-by::before { content: "— "; }
+
+/* --- Popover (native HTML Popover API) ------------------------------------ */
+.popover-trigger {
+  font: inherit;
+  font-size: 0.9em;
+  padding: 0 0.4em;
+  border: 1px dashed var(--accent);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+.popover {
+  max-width: 22rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+.popover > :first-child { margin-top: 0; }
+.popover > :last-child  { margin-bottom: 0; }

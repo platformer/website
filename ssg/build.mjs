@@ -1,13 +1,7 @@
-// Custom static site generator.
-//
-// Pipeline, per content/**/*.typ page:
-//   1. `typst compile --format html`  -> a full HTML document
-//   2. extract the <body> and wrap it in the shared shell (nav, <head>, footer)
-//   3. `typst eval query(<page-meta>)` -> the page title (and blog frontmatter)
-//   4. `typst eval query(<inline-script>)` -> embedded JS, injected as <script>
-//
-// Blog posts are collected in a first pass into content/blog/posts.json so that
-// content/blog/index.typ can render the post list from data.
+// Static site generator. Per content/**/*.typ page: compile to HTML, lift the
+// <body> into the shared shell, and read back its metadata (title, scripts,
+// styles, head tags) to fill <head> and inject scripts. A first pass gathers
+// blog frontmatter into posts.json for the index.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -18,7 +12,7 @@ import { join, relative, dirname, resolve, basename, sep } from "node:path";
 import { stripTypeScriptTypes } from "node:module";
 import { fileURLToPath } from "node:url";
 
-// stripTypeScriptTypes is experimental; silence only that warning.
+// Silence the experimental-feature warning from stripTypeScriptTypes.
 const _emitWarning = process.emitWarning;
 process.emitWarning = (warning, ...rest) => {
   const type = typeof rest[0] === "string" ? rest[0] : rest[0]?.type;
@@ -32,8 +26,8 @@ const STATIC = join(ROOT, "static");
 const DIST = join(ROOT, "dist");
 const TYPST = process.env.TYPST_BIN || "typst";
 
-// Files the build writes back into the source tree. The dev watcher ignores
-// these so regenerating them doesn't trigger an endless rebuild loop.
+// Written back into the source tree; the dev watcher ignores these to avoid a
+// rebuild loop.
 const BLOG_POSTS = join(CONTENT, "blog", "posts.json");
 export const GENERATED = [BLOG_POSTS];
 
@@ -46,9 +40,8 @@ const NAV = [
 
 // --- typst helpers ----------------------------------------------------------
 
-// Warnings that are inherent to Typst's experimental HTML export and to running
-// introspection (`typst eval`) over pages that use html.elem. They don't affect
-// output, so drop them; anything else (real errors and warnings) is passed on.
+// Diagnostics inherent to experimental HTML export and to html.elem
+// introspection. Harmless, so drop them; everything else passes through.
 const NOISE = [
   /html export is under active development/,
   /its behaviour may change/,
@@ -60,7 +53,7 @@ const NOISE = [
 
 function filterDiagnostics(stderr) {
   return stderr
-    .split(/\n\s*\n/) // Typst separates diagnostic blocks with a blank line
+    .split(/\n\s*\n/) // blank line separates diagnostic blocks
     .filter((block) => block.trim() && !NOISE.some((re) => re.test(block)))
     .join("\n\n");
 }
@@ -76,12 +69,12 @@ function typst(args) {
 
 const HTML = ["--features", "html", "--root", ROOT];
 
-// Compile a page to a full HTML document (written to stdout via `-`).
+// Full HTML document, to stdout.
 function compileHtml(file) {
   return typst(["compile", ...HTML, "--format", "html", file, "-"]);
 }
 
-// Evaluate a query expression against a page and parse the JSON result.
+// Run a query against a page, parse the JSON result.
 function evalQuery(file, expr) {
   const out = typst(["eval", ...HTML, "--format", "json", "--in", file, expr]);
   return JSON.parse(out);
@@ -95,23 +88,34 @@ function pageScripts(file) {
   return evalQuery(file, "query(<inline-script>).map(it => it.value)");
 }
 
-// Paths (relative to the .typ file) passed to #script(...) in the source.
+// #script(...) paths, relative to the .typ.
 function pageScriptSrcs(file) {
   return evalQuery(file, "query(<script-src>).map(it => it.value)");
 }
 
+// #style(...) sheets and #head(...) tags.
+function pageStyleSrcs(file) {
+  return evalQuery(file, "query(<style-src>).map(it => it.value)");
+}
+function pageHeadTags(file) {
+  return evalQuery(file, "query(<head-tag>).map(it => it.value)");
+}
+
+// "/..." is root-absolute; otherwise relative to the referencing .typ.
+function resolveAsset(fromFile, p) {
+  return p.startsWith("/") ? join(ROOT, p.slice(1)) : resolve(dirname(fromFile), p);
+}
+
 // --- script (TypeScript/JavaScript) helpers --------------------------------
 
-// Transpile TypeScript to browser JavaScript. `transform` mode also lowers
-// enums/namespaces. Note: this strips types per-file; it does NOT bundle
-// cross-file imports.
+// Strip TS types to browser JS (transform mode also lowers enums). Per-file:
+// no cross-file bundling.
 function transpile(code) {
   return stripTypeScriptTypes(code, { mode: "transform" });
 }
 
-// Where a referenced script's compiled .js lands in dist, and its URL. Scripts
-// under content/ mirror their path (content/misc/x.ts -> /misc/x.js); scripts
-// elsewhere in the repo go under /scripts/, outside the repo under /scripts/.
+// Public URL/path for a compiled script: content/ mirrors its path
+// (content/misc/x.ts -> /misc/x.js); anything else lands under /scripts/.
 function scriptOutput(srcAbs) {
   let rel = relative(ROOT, srcAbs).split(sep).join("/");
   if (rel.startsWith("content/")) rel = rel.slice("content/".length);
@@ -120,7 +124,7 @@ function scriptOutput(srcAbs) {
   return { outRel, url: "/" + outRel };
 }
 
-// Compile a referenced script file to dist once, returning its public URL.
+// Compile a script to dist once; return its URL.
 const scriptCache = new Map(); // srcAbs -> url
 function emitScript(srcAbs) {
   if (scriptCache.has(srcAbs)) return scriptCache.get(srcAbs);
@@ -133,6 +137,32 @@ function emitScript(srcAbs) {
   writeFileSync(out, code);
   scriptCache.set(srcAbs, url);
   return url;
+}
+
+// Copy a stylesheet to dist once; return its URL. Files outside content/ land
+// under /styles/.
+const styleCache = new Map(); // srcAbs -> url
+function emitStyle(srcAbs) {
+  if (styleCache.has(srcAbs)) return styleCache.get(srcAbs);
+  if (!existsSync(srcAbs)) throw new Error(`#style: file not found: ${srcAbs}`);
+  let rel = relative(ROOT, srcAbs).split(sep).join("/");
+  if (rel.startsWith("content/")) rel = rel.slice("content/".length);
+  else if (rel.startsWith("../")) rel = `styles/${basename(srcAbs)}`;
+  const url = "/" + rel;
+  const out = join(DIST, rel);
+  mkdirSync(dirname(out), { recursive: true });
+  cpSync(srcAbs, out);
+  styleCache.set(srcAbs, url);
+  return url;
+}
+
+// A #head(...) marker as a head tag; void tags have no closer.
+const VOID_TAGS = new Set(["link", "meta", "base", "br", "hr", "img", "input"]);
+function renderHeadTag({ tag, attrs }) {
+  const a = Object.entries(attrs || {})
+    .map(([k, v]) => ` ${k}="${String(v).replaceAll('"', "&quot;")}"`)
+    .join("");
+  return VOID_TAGS.has(tag) ? `<${tag}${a}>` : `<${tag}${a}></${tag}>`;
 }
 
 // --- filesystem helpers -----------------------------------------------------
@@ -153,20 +183,27 @@ function extractBody(html) {
   return (m ? m[1] : html).trim();
 }
 
+const uniq = (arr) => [...new Set(arr)];
+
 // --- page shell -------------------------------------------------------------
 
-function shell({ title, bodyHtml, headScripts = [], scripts = [] }) {
+function shell({ title, bodyHtml, headStyles = [], headTags = [], headScripts = [], scripts = [] }) {
   const nav = NAV.map((n) => `<a href="${n.href}">${n.label}</a>`).join("");
-  // All scripts are type="module", which is deferred by default: they execute
-  // after the DOM is parsed, in document order (head scripts before body ones).
-  // Modules are also isolated, so per-toy top-level `const`/`let` never collide.
-  const headTags = headScripts
+  const styleLinks = headStyles
+    .map((href) => `<link rel="stylesheet" href="${href}">`)
+    .join("\n");
+  // type="module" is deferred: runs after DOM parse, in order (head before
+  // body). Modules are isolated, so top-level const/let across toys don't clash.
+  const headScriptTags = headScripts
     .map((src) => `<script type="module" src="${src}"></script>`)
     .join("\n");
   const scriptTags = scripts
     .map((s) => `<script type="module">\n${s}\n</script>`)
     .join("\n");
   const pageTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+  const headExtras = [styleLinks, headTags.join("\n"), headScriptTags]
+    .filter(Boolean)
+    .join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -174,7 +211,7 @@ function shell({ title, bodyHtml, headScripts = [], scripts = [] }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${pageTitle}</title>
 <link rel="stylesheet" href="/styles.css">
-${headTags}
+${headExtras}
 </head>
 <body>
 <header class="site-nav"><nav>${nav}</nav></header>
@@ -194,7 +231,7 @@ export function build() {
   rmSync(DIST, { recursive: true, force: true });
   mkdirSync(DIST, { recursive: true });
 
-  // Pass 1: collect blog frontmatter into posts.json (consumed by blog/index.typ).
+  // Pass 1: blog frontmatter -> posts.json (read by blog/index.typ).
   const blogDir = join(CONTENT, "blog");
   if (existsSync(blogDir)) {
     const posts = [];
@@ -213,18 +250,19 @@ export function build() {
     writeFileSync(BLOG_POSTS, JSON.stringify(posts, null, 2));
   }
 
-  // Pass 2: compile every page.
+  // Pass 2: compile pages.
   let count = 0;
   for (const file of findTyp(CONTENT)) {
     const rel = relative(CONTENT, file).replace(/\.typ$/, ".html");
     const meta = pageMeta(file);
     const bodyHtml = extractBody(compileHtml(file));
-    // External files loaded via #script(...) -> compiled to dist, linked in <head>.
-    const headScripts = pageScriptSrcs(file)
-      .map((rel) => emitScript(resolve(dirname(file), rel)));
-    // Embedded ```inline-script blocks -> transpiled, inlined before </body>.
+    // Head channel, deduplicated: #style sheets, #head tags, #script files.
+    const headStyles = uniq(pageStyleSrcs(file).map((p) => emitStyle(resolveAsset(file, p))));
+    const headTags = uniq(pageHeadTags(file).map(renderHeadTag));
+    const headScripts = uniq(pageScriptSrcs(file).map((p) => emitScript(resolveAsset(file, p))));
+    // Inline blocks: transpile, inject before </body>.
     const scripts = pageScripts(file).map(transpile);
-    const html = shell({ title: meta.title, bodyHtml, headScripts, scripts });
+    const html = shell({ title: meta.title, bodyHtml, headStyles, headTags, headScripts, scripts });
 
     const outPath = join(DIST, rel);
     mkdirSync(dirname(outPath), { recursive: true });
@@ -233,11 +271,11 @@ export function build() {
     count += 1;
   }
 
-  // Static assets (styles.css, images, ...) copied to the site root.
+  // Static assets copied to the site root.
   if (existsSync(STATIC)) cpSync(STATIC, DIST, { recursive: true });
 
   console.log(`\nDone: ${count} page(s) -> ${relative(ROOT, DIST)}/`);
 }
 
-// Run when invoked directly (`node ssg/build.mjs`); stay quiet when imported.
+// Run when invoked directly; stay quiet when imported.
 if (process.argv[1] === fileURLToPath(import.meta.url)) build();

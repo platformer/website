@@ -1,12 +1,9 @@
-// Dev server: builds the site, serves dist/, watches sources, and live-reloads
-// the browser on change. Run with `npm run dev`.
+// Dev server: builds dist/, serves it, watches sources, and live-reloads the
+// browser on change (`npm run dev`).
 //
-// Why polling instead of fs.watch / `typst watch`: this repo lives on a
-// Windows-mounted path under WSL2 (/mnt/c/...), where inotify-based watchers
-// don't fire. Stat-based mtime polling works everywhere. And `typst watch`
-// can't drive this alone — the build is a multi-step pipeline (per-page compile
-// + metadata queries + TypeScript transpile + templating), so we re-run the
-// whole build() on change.
+// Polling rather than fs.watch: on this repo's WSL2 /mnt/c mount inotify doesn't
+// fire. And `typst watch` can't run the pipeline (per-page compile + metadata
+// queries + TS transpile + templating), so a change re-runs the whole build().
 
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -17,7 +14,7 @@ import { build, GENERATED } from "./build.mjs";
 const ROOT = resolve(import.meta.dirname, "..");
 const DIST = join(ROOT, "dist");
 const WATCH = ["content", "lib", "static"].map((d) => join(ROOT, d));
-const IGNORE = new Set(GENERATED); // build outputs, so they don't self-trigger
+const IGNORE = new Set(GENERATED); // build outputs; skip so they don't self-trigger
 const PORT = process.env.PORT || 4321;
 const POLL_MS = 300;
 
@@ -41,7 +38,8 @@ function broadcastReload() {
   for (const res of clients) res.write("data: reload\n\n");
 }
 
-// --- build (guarded so a Typst error doesn't kill the server) ----------------
+// --- build ------------------------------------------------------------------
+// Guarded so a Typst error doesn't kill the server.
 function safeBuild() {
   try {
     build();
@@ -109,6 +107,7 @@ const server = createServer(async (req, res) => {
   try {
     const file = await resolveFile(pathname);
     if (extname(file) === ".html") {
+      // Inject the live-reload client into served HTML (not into dist/ itself).
       let html = await readFile(file, "utf8");
       html = html.includes("</body>")
         ? html.replace("</body>", `${RELOAD_SNIPPET}</body>`)
@@ -129,12 +128,12 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  safeBuild(); // initial build (synchronous, so nothing is served half-built)
+  safeBuild(); // synchronous, so nothing is served half-built
   let prev = snapshot();
   setInterval(() => {
     const next = snapshot();
     if (changed(prev, next)) {
-      console.log("change detected — rebuilding…");
+      console.log("change detected, rebuilding...");
       if (safeBuild()) broadcastReload();
     }
     prev = next;
