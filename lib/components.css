@@ -74,13 +74,22 @@
 }
 .popover {
   max-width: 22rem;
-  margin: 0;
   padding: 0.75rem 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
   color: var(--fg);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+/* Anchor the panel under its trigger where CSS anchor positioning ships
+   (Chromium for now). Elsewhere it falls back to the UA default (centered). */
+@supports (position-area: bottom) {
+  .popover {
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block, flip-inline;
+    inset: auto;
+    margin: 0.4rem 0 0 0;
+  }
 }
 .popover > :first-child { margin-top: 0; }
 .popover > :last-child  { margin-bottom: 0; }

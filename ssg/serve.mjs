@@ -6,8 +6,7 @@
 // queries + TS transpile + templating), so a change re-runs the whole build().
 
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
-import { readdirSync, statSync } from "node:fs";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { join, extname, resolve } from "node:path";
 import { build, GENERATED } from "./build.mjs";
 
@@ -51,24 +50,26 @@ function safeBuild() {
 }
 
 // --- source polling ---------------------------------------------------------
-function snapshot() {
+// Async: stat is slow on /mnt/c, so keep it off the event loop or it stalls
+// serving. Stats fan out onto the libuv threadpool.
+async function snapshot() {
   const seen = new Map();
-  const walk = (dir) => {
+  const walk = async (dir) => {
     let entries;
     try {
-      entries = readdirSync(dir, { withFileTypes: true });
+      entries = await readdir(dir, { withFileTypes: true });
     } catch {
       return; // dir may not exist (e.g. no static/)
     }
-    for (const e of entries) {
-      if (e.name.startsWith(".")) continue;
+    await Promise.all(entries.map(async (e) => {
+      if (e.name.startsWith(".")) return;
       const full = join(dir, e.name);
-      if (IGNORE.has(full)) continue;
-      if (e.isDirectory()) walk(full);
-      else seen.set(full, statSync(full).mtimeMs);
-    }
+      if (IGNORE.has(full)) return;
+      if (e.isDirectory()) await walk(full);
+      else seen.set(full, (await stat(full)).mtimeMs);
+    }));
   };
-  for (const d of WATCH) walk(d);
+  await Promise.all(WATCH.map(walk));
   return seen;
 }
 
@@ -127,16 +128,20 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   safeBuild(); // synchronous, so nothing is served half-built
-  let prev = snapshot();
-  setInterval(() => {
-    const next = snapshot();
+  console.log(`\n  http://localhost:${PORT}   (watching sources, live reload on)\n`);
+
+  // Self-scheduling so polls never overlap.
+  let prev = await snapshot();
+  const tick = async () => {
+    const next = await snapshot();
     if (changed(prev, next)) {
       console.log("change detected, rebuilding...");
       if (safeBuild()) broadcastReload();
     }
     prev = next;
-  }, POLL_MS);
-  console.log(`\n  http://localhost:${PORT}   (watching sources, live reload on)\n`);
+    setTimeout(tick, POLL_MS);
+  };
+  setTimeout(tick, POLL_MS);
 });

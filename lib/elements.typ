@@ -71,8 +71,14 @@
   prefix: "site",
   display: it => {
     _uses-css
-    html.elem("button", attrs: (class: "popover-trigger", popovertarget: it.id), it.trigger)
-    html.elem("div", attrs: (id: it.id, popover: "", class: "popover"), it.body)
+    // Per-instance anchor name links trigger to panel for CSS anchor positioning.
+    let anchor = "--pop-" + it.id
+    html.elem("button", attrs: (
+      class: "popover-trigger", popovertarget: it.id, style: "anchor-name: " + anchor,
+    ), it.trigger)
+    html.elem("div", attrs: (
+      id: it.id, popover: "", class: "popover", style: "position-anchor: " + anchor,
+    ), it.body)
   },
   fields: (
     field("id", str, required: true),
