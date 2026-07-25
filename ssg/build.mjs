@@ -184,10 +184,78 @@ function extractBody(html) {
 
 const uniq = (arr) => [...new Set(arr)];
 
+// --- blog table of contents -------------------------------------------------
+
+function slugify(s) {
+  return (
+    s.toLowerCase()
+      .replace(/<[^>]*>/g, "")
+      .replace(/&[^;]+;/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "section"
+  );
+}
+
+// Give headings ids and collect sections (h3) and subsections (h4) for the TOC.
+function processHeadings(bodyHtml) {
+  const toc = [];
+  const used = new Map();
+  const html = bodyHtml.replace(
+    /<h([2-4])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
+    (_m, lvl, attrs, inner) => {
+      let slug = slugify(inner);
+      const seen = used.get(slug) || 0;
+      used.set(slug, seen + 1);
+      if (seen) slug = `${slug}-${seen + 1}`;
+      if (Number(lvl) >= 3) {
+        toc.push({ level: Number(lvl), id: slug, text: inner.replace(/<[^>]*>/g, "").trim() });
+      }
+      return `<h${lvl}${attrs} id="${slug}">${inner}</h${lvl}>`;
+    },
+  );
+  return { html, toc };
+}
+
+function tocHtml(entries) {
+  const items = entries
+    .map((e) => `<li class="toc-l${e.level}"><a href="#${e.id}">${e.text}</a></li>`)
+    .join("");
+  return `<nav class="toc" aria-label="Contents"><p class="toc-title">On this page</p><ul>${items}</ul></nav>`;
+}
+
+// Highlights the TOC entry for whichever section is currently in view.
+const SCROLLSPY = `
+const links = [...document.querySelectorAll(".toc a")];
+let active = null;
+const mark = (id) => {
+  if (id === active) return;
+  active = id;
+  for (const a of links) a.classList.toggle("active", a.getAttribute("href") === "#" + id);
+};
+const obs = new IntersectionObserver((entries) => {
+  const vis = entries.filter((e) => e.isIntersecting)
+    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+  if (vis[0]) mark(vis[0].target.id);
+}, { rootMargin: "-70px 0px -70% 0px" });
+for (const h of document.querySelectorAll("main :is(h3, h4)[id]")) obs.observe(h);
+`;
+
 // --- page shell -------------------------------------------------------------
 
-function shell({ title, bodyHtml, headStyles = [], headTags = [], headScripts = [], scripts = [] }) {
+function shell({ title, bodyHtml, toc = "", headStyles = [], headTags = [], headScripts = [], scripts = [] }) {
   const nav = NAV.map((n) => `<a href="${n.href}">${n.label}</a>`).join("");
+  const mainBlock = toc
+    ? `<main class="has-toc">
+<div class="post-layout">
+<aside class="toc-col">${toc}</aside>
+<article class="post-article">
+${bodyHtml}
+</article>
+</div>
+</main>`
+    : `<main>
+${bodyHtml}
+</main>`;
   const styleLinks = headStyles
     .map((href) => `<link rel="stylesheet" href="${href}">`)
     .join("\n");
@@ -219,9 +287,7 @@ ${headExtras}
 <nav>${nav}</nav>
 </div>
 </header>
-<main>
-${bodyHtml}
-</main>
+${mainBlock}
 <footer class="site-footer">© ${new Date().getFullYear()} ${SITE_NAME}</footer>
 ${scriptTags}
 </body>
@@ -259,14 +325,26 @@ export function build() {
   for (const file of findTyp(CONTENT)) {
     const rel = relative(CONTENT, file).replace(/\.typ$/, ".html");
     const meta = pageMeta(file);
-    const bodyHtml = extractBody(compileHtml(file));
+    const rawBody = extractBody(compileHtml(file));
+
+    // Blog posts get heading ids plus a TOC sidebar with scroll-spy.
+    const isPost = rel.startsWith("blog/") && rel !== "blog/index.html";
+    let bodyHtml = rawBody;
+    let toc = "";
+    if (isPost) {
+      const processed = processHeadings(rawBody);
+      bodyHtml = processed.html;
+      if (processed.toc.length >= 2) toc = tocHtml(processed.toc);
+    }
+
     // Head channel, deduplicated: #style sheets, #head tags, #script files.
     const headStyles = uniq(pageStyleSrcs(file).map((p) => emitStyle(resolveAsset(file, p))));
     const headTags = uniq(pageHeadTags(file).map(renderHeadTag));
     const headScripts = uniq(pageScriptSrcs(file).map((p) => emitScript(resolveAsset(file, p))));
     // Inline blocks: transpile, inject before </body>.
     const scripts = pageScripts(file).map(transpile);
-    const html = shell({ title: meta.title, bodyHtml, headStyles, headTags, headScripts, scripts });
+    if (toc) scripts.push(SCROLLSPY);
+    const html = shell({ title: meta.title, bodyHtml, toc, headStyles, headTags, headScripts, scripts });
 
     const outPath = join(DIST, rel);
     mkdirSync(dirname(outPath), { recursive: true });

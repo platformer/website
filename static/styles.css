@@ -24,6 +24,7 @@
   --note:      var(--c-blue);
 
   --max: 46rem;
+  --wide: 66rem;
 }
 
 /* ---- Semantic tokens: dark ---------------------------------------------- */
@@ -72,18 +73,42 @@ body {
   border-radius: 3px;
 }
 
-/* ---- Header -------------------------------------------------------------- */
+/* ---- Header (blue -> dither -> black band) ------------------------------- */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: saturate(1.4) blur(8px);
-  border-bottom: 1px solid var(--border);
+  isolation: isolate;
+  background: linear-gradient(90deg, var(--c-blue) 0 50%, var(--c-ink) 50% 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* Dithered seam: blue pixels poke right into the black, ink pixels poke left
+   into the blue, over a narrow band at the middle. A soft approximation of an
+   ordered dither (CSS can't threshold per pixel). */
+.site-header::before,
+.site-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  --sq: 4px;
+  background-size: calc(var(--sq) * 2) calc(var(--sq) * 2);
+  pointer-events: none;
+}
+.site-header::before {
+  background-image: conic-gradient(var(--c-blue) 0 25%, #0000 0 50%, var(--c-blue) 0 75%, #0000 0);
+  -webkit-mask: linear-gradient(90deg, #0000 44%, #000 50%, #0000 63%);
+  mask: linear-gradient(90deg, #0000 44%, #000 50%, #0000 63%);
+}
+.site-header::after {
+  background-image: conic-gradient(var(--c-ink) 0 25%, #0000 0 50%, var(--c-ink) 0 75%, #0000 0);
+  background-position: var(--sq) 0;
+  -webkit-mask: linear-gradient(90deg, #0000 37%, #000 50%, #0000 56%);
+  mask: linear-gradient(90deg, #0000 37%, #000 50%, #0000 56%);
 }
 
 .site-header-inner {
-  max-width: var(--max);
+  max-width: var(--wide);
   margin-inline: auto;
   padding: 0.85rem 1.25rem;
   display: flex;
@@ -94,10 +119,11 @@ body {
 .brand {
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--fg);
+  color: #fff;
   text-decoration: none;
+  text-shadow: 0 1px 2px rgba(2, 2, 11, 0.35);
 }
-.brand:hover { color: var(--accent); }
+.brand:hover { opacity: 0.85; }
 
 .site-header nav {
   margin-left: auto;
@@ -105,8 +131,8 @@ body {
   gap: 1.25rem;
   font-size: 0.95rem;
 }
-.site-header nav a { color: var(--muted); text-decoration: none; }
-.site-header nav a:hover { color: var(--accent); }
+.site-header nav a { color: rgba(255, 255, 255, 0.72); text-decoration: none; }
+.site-header nav a:hover { color: #fff; }
 
 /* ---- Layout -------------------------------------------------------------- */
 main {
@@ -195,6 +221,53 @@ button:active { transform: translateY(1px); }
   font-variant-numeric: tabular-nums;
 }
 .post-summary { margin: 0.5rem 0 0; color: var(--muted); }
+
+/* ---- Post layout with TOC sidebar --------------------------------------- */
+main.has-toc { max-width: var(--wide); }
+.post-article { max-width: var(--max); }
+
+@media (min-width: 64rem) {
+  .post-layout {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+  }
+}
+
+.toc {
+  position: sticky;
+  top: 5rem;
+  font-size: 0.85rem;
+  border-left: 2px solid var(--border);
+}
+.toc-title {
+  margin: 0 0 0.5rem 0.9rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: 0; }
+.toc a {
+  display: block;
+  margin-left: -2px;
+  padding: 0.15rem 0 0.15rem 0.9rem;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  line-height: 1.35;
+}
+.toc a:hover { color: var(--fg); }
+.toc a.active { color: var(--accent); border-left-color: var(--brand); }
+.toc-l4 a { padding-left: 1.7rem; font-size: 0.95em; }
+
+:is(h2, h3, h4)[id] { scroll-margin-top: 4.5rem; }
+
+@media (max-width: 63.99rem) {
+  .toc-col { display: none; }
+}
 
 /* ---- Footer -------------------------------------------------------------- */
 .site-footer {

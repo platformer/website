@@ -11,6 +11,8 @@
 This is the first post. The interesting bit is the widget below: it is driven
 by JavaScript written *inside this Typst file*.
 
+== The embedded script
+
 Clicks: #id("demo-count")[0]
 
 #button("demo-box")[Click me]
@@ -35,9 +37,13 @@ tag.
 The library ships a few building blocks for posts. Their stylesheet is pulled
 in through the head channel only when used, and deduplicated.
 
+=== Callouts
+
 #note[A plain note for context.]
 
 #warn(title: "Careful")[This calls out something risky.]
+
+=== Quotes and details
 
 #blockquote(by: [Ada Lovelace])[
   The Analytical Engine weaves algebraic patterns.
@@ -47,6 +53,13 @@ in through the head channel only when used, and deduplicated.
   Collapsible content, built on the native `<details>` element --- no JavaScript.
 ]
 
+=== Popovers
+
 Hover facts appear in a
 #popover("pv-native", "popover")[Powered by the native HTML Popover API, so it
 needs no script either.].
+
+== Notes
+
+Everything on this page is static HTML plus a little JavaScript. Scroll and the
+sidebar tracks where you are.
