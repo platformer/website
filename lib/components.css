@@ -4,22 +4,21 @@
 
 /* --- Callouts ------------------------------------------------------------- */
 .callout {
-  --callout-accent: var(--accent);
-  margin: 1.25rem 0;
-  padding: 0.75rem 1rem;
+  --callout-accent: var(--note);
+  margin: 1.5rem 0;
+  padding: 0.85rem 1.1rem;
   border-left: 3px solid var(--callout-accent);
-  border-radius: 0 6px 6px 0;
-  background: color-mix(in srgb, var(--callout-accent) 8%, transparent);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--callout-accent) 9%, transparent);
 }
-.callout-tip  { --callout-accent: #2f9e6f; }
-.callout-warn { --callout-accent: #c9772f; }
+.callout-tip  { --callout-accent: var(--tip); }
+.callout-warn { --callout-accent: var(--warn); }
 
 .callout-title {
   margin: 0 0 0.35rem;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.85rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--callout-accent);
 }
@@ -28,28 +27,28 @@
 
 /* --- Details (collapsible) ------------------------------------------------ */
 .details {
-  margin: 1.25rem 0;
+  margin: 1.5rem 0;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  padding: 0.6rem 1.1rem;
+  background: var(--surface);
 }
 .details > summary {
   cursor: pointer;
-  font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   list-style-position: inside;
 }
+.details > summary:hover { color: var(--accent); }
 .details[open] > summary { margin-bottom: 0.5rem; }
 .details-body > :first-child { margin-top: 0; }
 .details-body > :last-child  { margin-bottom: 0; }
 
 /* --- Blockquote ----------------------------------------------------------- */
 .quote {
-  margin: 1.5rem 0;
-  padding-left: 1.1rem;
-  border-left: 3px solid var(--border);
-  color: var(--muted);
+  margin: 1.75rem 0;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--brand);
   font-style: italic;
 }
 .quote-body > :first-child { margin-top: 0; }
@@ -65,21 +64,22 @@
 .popover-trigger {
   font: inherit;
   font-size: 0.9em;
+  margin: 0;
   padding: 0 0.4em;
   border: 1px dashed var(--accent);
-  border-radius: 4px;
-  background: transparent;
+  border-radius: 5px;
+  background: var(--accent-soft);
   color: var(--accent);
   cursor: pointer;
 }
 .popover {
   max-width: 22rem;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.1rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
+  border-radius: 10px;
+  background: var(--surface);
   color: var(--fg);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 12px 34px rgba(2, 2, 11, 0.28);
 }
 /* Anchor the panel under its trigger where CSS anchor positioning ships
    (Chromium for now). Elsewhere it falls back to the UA default (centered). */

@@ -33,7 +33,6 @@ export const GENERATED = [BLOG_POSTS];
 
 const SITE_NAME = "Andrew Sen";
 const NAV = [
-  { label: "Home", href: "/" },
   { label: "Blog", href: "/blog/" },
   { label: "Misc", href: "/misc/" },
 ];
@@ -214,7 +213,12 @@ function shell({ title, bodyHtml, headStyles = [], headTags = [], headScripts = 
 ${headExtras}
 </head>
 <body>
-<header class="site-nav"><nav>${nav}</nav></header>
+<header class="site-header">
+<div class="site-header-inner">
+<a class="brand" href="/">${SITE_NAME}</a>
+<nav>${nav}</nav>
+</div>
+</header>
 <main>
 ${bodyHtml}
 </main>

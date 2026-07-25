@@ -9,9 +9,14 @@
 
 #if posts.len() == 0 [
   Nothing here yet.
-] else [
-  #for post in posts [
-    / #post.date: #link("/blog/" + post.slug + ".html")[#post.title] \
-      #if post.summary != "" [#text(fill: gray)[#post.summary]]
-  ]
-]
+] else {
+  elem("ul", class: "posts", {
+    for post in posts {
+      elem("li", class: "post", {
+        elem("a", post.title, class: "post-link", href: "/blog/" + post.slug + ".html")
+        elem("div", post.date, class: "post-meta")
+        if post.summary != "" { elem("p", post.summary, class: "post-summary") }
+      })
+    }
+  })
+}
