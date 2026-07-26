@@ -1,8 +1,8 @@
-// Site-wide settings. The SSG reads this too (one `typst eval` per build), so
-// it's the only place these live.
+// Site-wide settings. The SSG reads this too, once per build, so it's the only
+// place they live.
 
-// Where a content source file ends up on the site. Defined here rather than in
-// the SSG so Typst and the generator can't disagree about a link.
+// Where a source file ends up on the site. Here rather than in the SSG so the
+// two can't disagree about a link.
 //   /content/index.typ         -> /
 //   /content/blog/index.typ    -> /blog/
 //   /content/misc/counter.typ  -> /misc/counter.html
@@ -14,11 +14,11 @@
   p
 }
 
-// Nav entries point at the page's source, not its URL; the href is derived.
-// The SSG checks each page exists, so a rename fails the build.
+// Nav points at each page's source; the href is derived and the SSG checks the
+// file exists, so a rename fails the build.
 #let _nav = (
   (label: "Blog", page: "/content/blog/index.typ"),
-  (label: "Misc", page: "/content/misc/index.typ"),
+  (label: "Contact", page: "/content/contact/index.typ"),
 )
 
 #let site = (

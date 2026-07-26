@@ -1,13 +1,14 @@
-/* ---- Palette (fixed) ----------------------------------------------------- */
+/* #region tokens */
+/* palette */
 :root {
   --c-amber:   #f1c40f;
   --c-paprika: #cf5c36;
-  --c-blue:    #279af1;
+  --c-blue:    #007ede;
   --c-ink:     #02020b;
   --c-green:   #04724d;
 }
 
-/* ---- Semantic tokens: light --------------------------------------------- */
+/* light */
 :root {
   --bg:        #fbfbfd;
   --surface:   #ffffff;
@@ -24,13 +25,12 @@
   --note:      var(--c-blue);
 }
 
-/* ---- Metrics ------------------------------------------------------------- */
-/* Layout numbers that other rules derive from. The TOC in components.css and
-   the scroll-spy both read off these, so keep changes here. */
+/* metrics: values other rules derive from, including components.css and the
+   scroll-spy, so change them here */
 :root {
-  /* Relative, not px: 112.5% of the reader's default is 18px at the usual 16px,
-     but still scales if they've set a larger one. Note media queries resolve
-     rem against that default, not this, so the TOC breakpoint is in px. */
+  /* Relative so it still scales with the reader's own font size; 112.5% of the
+     usual 16px default is 18px. Media queries resolve rem against that default
+     rather than this, so the TOC breakpoint is in px. */
   --root-size: 112.5%;
   --max: 46rem;           /* reading column */
   --pad-x: 1.25rem;       /* gutter, shared by header, main and footer */
@@ -46,7 +46,7 @@
   --below-header: calc(var(--header-h) + var(--gap));
 }
 
-/* ---- Semantic tokens: dark ---------------------------------------------- */
+/* dark */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg:      #04040d;
@@ -55,7 +55,7 @@
     --muted:   #9595a6;
     --border:  #1e1e2b;
 
-    --accent:  #57b0f6;
+    --accent:  #77aed6;
     --accent-soft: color-mix(in srgb, var(--c-blue) 22%, transparent);
 
     --tip:     color-mix(in srgb, var(--c-green) 62%, white);
@@ -64,7 +64,9 @@
   }
 }
 
-/* ---- Base ---------------------------------------------------------------- */
+/* #endregion */
+
+/* #region base */
 * { box-sizing: border-box; }
 
 html {
@@ -92,7 +94,9 @@ body {
   border-radius: 3px;
 }
 
-/* ---- Header (blue -> dither -> black band) ------------------------------- */
+/* #endregion */
+
+/* #region header: blue, dithered seam, black */
 .site-header {
   position: sticky;
   top: 0;
@@ -101,9 +105,9 @@ body {
   --seam: 135deg; /* 135deg gradient => 45deg color boundary */
   background: linear-gradient(var(--seam), var(--c-blue) 0 50%, var(--c-ink) 50% 100%);
 }
-/* Dithered seam: blue pixels poke right into the black, ink pixels poke left
-   into the blue, over a narrow band at the middle. A soft approximation of an
-   ordered dither (CSS can't threshold per pixel). */
+/* Blue squares poke right into the black and ink squares left into the blue,
+   over a narrow band at the seam. An approximation: CSS can't threshold per
+   pixel, so this isn't a true ordered dither. */
 .site-header::before,
 .site-header::after {
   content: "";
@@ -154,7 +158,9 @@ body {
 .site-header nav a { color: rgba(255, 255, 255, 0.72); text-decoration: none; }
 .site-header nav a:hover { color: #fff; }
 
-/* ---- Layout -------------------------------------------------------------- */
+/* #endregion */
+
+/* #region layout */
 main {
   position: relative; /* anchor for a #toc() floated into the left margin */
   max-width: var(--max);
@@ -164,7 +170,9 @@ main {
 
 main > :first-child { margin-top: 0; }
 
-/* ---- Typography ---------------------------------------------------------- */
+/* #endregion */
+
+/* #region typography */
 h1, h2, h3, h4 {
   line-height: 1.2;
   font-weight: 700;
@@ -184,7 +192,9 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 strong { font-weight: 650; }
 hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 
-/* ---- Code ---------------------------------------------------------------- */
+/* #endregion */
+
+/* #region code */
 code {
   font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.86em;
@@ -206,7 +216,9 @@ pre {
 }
 pre code { background: none; padding: 0; }
 
-/* ---- Buttons (toys) ------------------------------------------------------ */
+/* #endregion */
+
+/* #region buttons */
 button {
   font: inherit;
   font-size: 0.9rem;
@@ -222,19 +234,55 @@ button {
 button:hover { border-color: var(--brand); color: var(--accent); }
 button:active { transform: translateY(1px); }
 
-/* ---- Blog index ---------------------------------------------------------- */
-.posts { list-style: none; margin: 2rem 0 0; padding: 0; }
+/* #endregion */
+
+/* #region ascii boat */
+.boat {
+  width: fit-content;
+  margin: 0 auto 2.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  overflow: hidden;
+  color: var(--brand);
+  /* Must be monospace or the art shears; a bare pre inherits the body font. */
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  white-space: pre;
+  user-select: none;
+}
+
+/* #endregion */
+
+/* #region post lists */
+.posts { list-style: none; margin: 0.75rem 0 0; padding: 0; }
 .post {
   padding: var(--gap) 0;
   border-top: 1px solid var(--border);
 }
 .post:last-child { border-bottom: 1px solid var(--border); }
-.post-link {
-  font-size: 1.25rem;
-  font-weight: 650;
-  color: var(--fg);
+.post-title {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
 }
-.post-link:hover { color: var(--accent); text-decoration: none; }
+/* Start each item where its text looks like it starts, not where its line box
+   does. */
+@supports (text-box-trim: trim-start) {
+  .post-title { text-box-trim: trim-start; text-box-edge: cap alphabetic; }
+}
+
+/* Read as a link rather than a bold heading. */
+.post-link {
+  font-weight: 650;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.post-link:hover { text-decoration-color: var(--accent); }
 .post-meta {
   margin-top: 0.2rem;
   color: var(--muted);
@@ -242,11 +290,14 @@ button:active { transform: translateY(1px); }
   font-variant-numeric: tabular-nums;
 }
 .post-summary { margin: 0.5rem 0 0; color: var(--muted); }
+.more-posts { margin: 1.25rem 0 0; font-size: 0.95rem; }
 
 /* Heading anchors clear the sticky header when jumped to. */
 :is(h1, h2, h3, h4)[id] { scroll-margin-top: var(--below-header); }
 
-/* ---- Footer -------------------------------------------------------------- */
+/* #endregion */
+
+/* #region footer */
 .site-footer {
   max-width: var(--max);
   margin: var(--pad-bottom) auto 0;
@@ -255,3 +306,5 @@ button:active { transform: translateY(1px); }
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+/* #endregion */

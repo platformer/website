@@ -1,9 +1,9 @@
 // Dev server: builds dist/, serves it, watches sources, and live-reloads the
 // browser on change (`npm run dev`).
 //
-// Polling rather than fs.watch: on this repo's WSL2 /mnt/c mount inotify doesn't
-// fire. And `typst watch` can't run the pipeline (per-page compile + metadata
-// queries + TS transpile + templating), so a change re-runs the whole build().
+// Polls rather than using fs.watch, since inotify doesn't fire on this repo's
+// WSL2 /mnt/c mount. `typst watch` can't drive the pipeline either, so a change
+// re-runs build().
 
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -29,7 +29,8 @@ const TYPES: Record<string, string> = {
   ".ico": "image/x-icon",
 };
 
-// --- live reload (Server-Sent Events) ---------------------------------------
+//#region live reload (Server-Sent Events)
+
 const clients = new Set<ServerResponse>();
 const RELOAD_SNIPPET =
   `<script>new EventSource("/__livereload").onmessage=()=>location.reload()</script>`;
@@ -38,7 +39,8 @@ function broadcastReload(): void {
   for (const res of clients) res.write("data: reload\n\n");
 }
 
-// --- build ------------------------------------------------------------------
+//#endregion
+
 // Guarded so a Typst error doesn't kill the server.
 function safeBuild(): boolean {
   try {
@@ -50,9 +52,9 @@ function safeBuild(): boolean {
   }
 }
 
-// --- source polling ---------------------------------------------------------
-// Async: stat is slow on /mnt/c, so keep it off the event loop or it stalls
-// serving. Stats fan out onto the libuv threadpool.
+//#region source polling
+
+// Async because stat is slow on /mnt/c; on the event loop it stalls serving.
 async function snapshot(): Promise<Map<string, number>> {
   const seen = new Map<string, number>();
   const walk = async (dir: string): Promise<void> => {
@@ -80,7 +82,10 @@ function changed(a: Map<string, number>, b: Map<string, number>): boolean {
   return false;
 }
 
-// --- file serving -----------------------------------------------------------
+//#endregion
+
+//#region file serving
+
 async function resolveFile(pathname: string): Promise<string> {
   let file = join(DIST, pathname);
   try {
@@ -90,6 +95,8 @@ async function resolveFile(pathname: string): Promise<string> {
   }
   return file;
 }
+
+//#endregion
 
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
@@ -109,7 +116,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   try {
     const file = await resolveFile(pathname);
     if (extname(file) === ".html") {
-      // Inject the live-reload client into served HTML (not into dist/ itself).
+      // Injected per response, so it never lands in dist/.
       let html = await readFile(file, "utf8");
       html = html.includes("</body>")
         ? html.replace("</body>", `${RELOAD_SNIPPET}</body>`)

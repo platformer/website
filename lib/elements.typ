@@ -1,12 +1,12 @@
 #import "/lib/base.typ": *
 #import "@preview/elembic:1.1.1" as e: field, types
 
-// Post components, as elembic elements: typed fields, restylable in bulk from
-// templates.typ. Each registers the shared stylesheet on use, and the SSG links
-// it once per page.
+// Components as elembic elements: typed fields, restylable in bulk from
+// templates.typ. Each registers the shared stylesheet on use; the SSG links it
+// once per page.
 #let _uses-css = style("/lib/components.css")
 
-// Callout. kind sets the accent; title optional.
+// kind sets the accent; title optional.
 #let callout = e.element.declare(
   "callout",
   prefix: "site",
@@ -27,7 +27,7 @@
 #let tip(body, ..a) = callout(body, kind: "tip", ..a.named())
 #let warn(body, ..a) = callout(body, kind: "warn", ..a.named())
 
-// Collapsible. Native <details>; open to start expanded.
+// Native <details>; open to start expanded.
 #let details = e.element.declare(
   "details",
   prefix: "site",
@@ -47,7 +47,7 @@
   ),
 )
 
-// Quote with optional attribution.
+// Optional attribution.
 #let blockquote = e.element.declare(
   "blockquote",
   prefix: "site",
@@ -64,14 +64,14 @@
   ),
 )
 
-// Popover via the native Popover API; id must be unique on the page. The field
-// is `trigger` because elembic reserves `label`.
+// Native Popover API; id must be unique on the page. The field is `trigger`
+// because elembic reserves `label`.
 #let popover = e.element.declare(
   "popover",
   prefix: "site",
   display: it => {
     _uses-css
-    // Per-instance anchor name links trigger to panel for CSS anchor positioning.
+    // Per-instance anchor name ties the panel to its trigger.
     let anchor = "--pop-" + it.id
     html.elem("button", attrs: (
       class: "popover-trigger", popovertarget: it.id, style: "anchor-name: " + anchor,
@@ -87,16 +87,31 @@
   ),
 )
 
-// Site footer. A sibling of <main>, so it keeps its contentinfo landmark.
+// Shared by the blog index and the home page. `posts` comes from posts.json.
+#let post-list(posts, limit: none) = {
+  let shown = if limit == none { posts } else { posts.slice(0, calc.min(limit, posts.len())) }
+  elem("ul", class: "posts", {
+    for post in shown {
+      elem("li", class: "post", {
+        elem("h3", elem("a", post.title, class: "post-link", href: page-url(post.page)),
+             class: "post-title")
+        elem("div", post.date, class: "post-meta")
+        if post.summary != "" { elem("p", post.summary, class: "post-summary") }
+      })
+    }
+  })
+}
+
+// A sibling of <main>, so it keeps its contentinfo landmark.
 #let site-footer() = elem(
   "footer",
   [© #datetime.today().year() #site.name],
   class: "site-footer",
 )
 
-// Table of contents. Place it in a post; it links every section (== and deeper)
-// and renders nothing if there are fewer than two. Typst assigns the heading
-// ids and anchors; the CSS floats it into the left margin when there's room.
+// Links every section (== and deeper), or renders nothing if there are fewer
+// than two. Typst assigns the heading ids and anchors; the CSS floats it into
+// the left margin when there's room.
 #let toc() = context {
   let heads = query(heading).filter(it => it.level >= 2)
   if heads.len() >= 2 {
@@ -109,7 +124,7 @@
         }
       })
     }, class: "toc"), class: "toc-col")
-    // Ship the highlight behavior with the element via the inline-script channel.
+    // Highlight behaviour ships with the element.
     raw(read("/lib/scrollspy.ts"), lang: "inline-script")
   }
 }

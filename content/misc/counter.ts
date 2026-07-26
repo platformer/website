@@ -1,5 +1,4 @@
-// Loaded by content/misc/counter.typ via #script("counter.ts").
-// Written in TypeScript; the SSG transpiles it to /misc/counter.js.
+// Loaded by counter.typ via #script; transpiled to /misc/counter.js.
 
 const val = document.getElementById("c-val") as HTMLElement;
 let n: number = 0;

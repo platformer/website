@@ -1,11 +1,9 @@
-/* Styles for the built-in components (note/tip/warn, details, blockquote,
-   popover, toc). Injected via the head channel only on pages that use one.
-   Relies on the CSS variables defined in static/styles.css. */
+/* Component styles, injected through the head channel only on pages that use
+   one. Tokens come from static/styles.css. */
 
-/* --- Table of contents ---------------------------------------------------- */
-/* #toc() renders <div class="toc-col"> inline in the article; on wide screens
-   it floats into the left margin (anchored to the centered <main>), otherwise
-   it's hidden. */
+/* #region toc */
+/* Rendered inline in the article; on wide screens it floats into the left
+   margin, anchored to the centred <main>. Hidden when there's no room. */
 .toc-col { display: none; }
 /* The margin has to hold the TOC on both sides of the centered column, so the
    breakpoint is --max + 2*(--toc-w + --gap). Media queries can't read custom
@@ -52,10 +50,9 @@
 .toc a.active { color: var(--accent); border-left-color: var(--brand); }
 .toc-l3 a { padding-left: calc(var(--toc-indent) * 2); font-size: 0.95em; }
 
-/* Optical alignment: box tops already match, but the leading above each text
-   differs with font size, so the TOC label reads as sitting high. Trimming both
-   boxes to cap height lines up the letters themselves, no fudge factor.
-   Chromium/Safari only for now; elsewhere it stays box-aligned as before. */
+/* Box tops already match, but leading scales with font size, so the TOC label
+   reads as sitting high. Trimming both to cap height aligns the letters
+   themselves, with no fudge factor. */
 @supports (text-box-trim: trim-start) {
   .toc-title,
   main > h2:first-of-type {
@@ -64,7 +61,9 @@
   }
 }
 
-/* --- Callouts ------------------------------------------------------------- */
+/* #endregion */
+
+/* #region callouts */
 .callout {
   --callout-accent: var(--note);
   margin: 1.5rem 0;
@@ -87,7 +86,9 @@
 .callout-body > :first-child { margin-top: 0; }
 .callout-body > :last-child  { margin-bottom: 0; }
 
-/* --- Details (collapsible) ------------------------------------------------ */
+/* #endregion */
+
+/* #region details */
 .details {
   margin: 1.5rem 0;
   border: 1px solid var(--border);
@@ -106,7 +107,9 @@
 .details-body > :first-child { margin-top: 0; }
 .details-body > :last-child  { margin-bottom: 0; }
 
-/* --- Blockquote ----------------------------------------------------------- */
+/* #endregion */
+
+/* #region blockquote */
 .quote {
   margin: 1.75rem 0;
   padding-left: 1.25rem;
@@ -122,7 +125,9 @@
 }
 .quote-by::before { content: "— "; }
 
-/* --- Popover (native HTML Popover API) ------------------------------------ */
+/* #endregion */
+
+/* #region popover */
 .popover-trigger {
   font: inherit;
   font-size: 0.9em;
@@ -143,8 +148,8 @@
   color: var(--fg);
   box-shadow: 0 12px 34px rgba(2, 2, 11, 0.28);
 }
-/* Anchor the panel under its trigger where CSS anchor positioning ships
-   (Chromium for now). Elsewhere it falls back to the UA default (centered). */
+/* Anchor positioning is Chromium-only for now; elsewhere the popover falls
+   back to the UA default, centred. */
 @supports (position-area: bottom) {
   .popover {
     position-area: bottom span-right;
@@ -155,3 +160,5 @@
 }
 .popover > :first-child { margin-top: 0; }
 .popover > :last-child  { margin-bottom: 0; }
+
+/* #endregion */

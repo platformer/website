@@ -1,10 +1,9 @@
-// Static site generator. Per content/**/*.typ page: compile to HTML, lift the
-// <body> into the shared shell, and read back its metadata (title, scripts,
-// styles, head tags) to fill <head> and inject scripts. A first pass gathers
-// blog frontmatter into posts.json for the index.
+// Static site generator. Compiles each content/**/*.typ to HTML, lifts the
+// <body> into a shared shell, and reads back the metadata the page emitted to
+// fill <head> and inject scripts.
 //
-// Run via `npm run build`, which passes --disable-warning=ExperimentalWarning
-// to quiet the notice from stripTypeScriptTypes below.
+// Run via `npm run build`; the script adds --disable-warning=ExperimentalWarning
+// for stripTypeScriptTypes.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -21,10 +20,12 @@ const STATIC = join(ROOT, "static");
 const DIST = join(ROOT, "dist");
 const TYPST = process.env.TYPST_BIN || "typst";
 
-// Written back into the source tree; the dev watcher ignores these to avoid a
+// Written back into the source tree; the dev watcher skips these to avoid a
 // rebuild loop.
 const BLOG_POSTS = join(CONTENT, "blog", "posts.json");
 export const GENERATED: string[] = [BLOG_POSTS];
+
+//#region types
 
 interface PageMeta {
   title?: string;
@@ -51,6 +52,13 @@ interface SiteConfig {
   name: string;
   nav: NavEntry[];
 }
+interface PageData {
+  meta: PageMeta;
+  scripts: string[];
+  scriptSrcs: string[];
+  styleSrcs: string[];
+  headTags: HeadTag[];
+}
 interface ShellOptions {
   title?: string;
   siteName: string;
@@ -62,10 +70,12 @@ interface ShellOptions {
   scripts?: string[];
 }
 
-// --- typst helpers ----------------------------------------------------------
+//#endregion
+
+//#region typst
 
 // The standing notice that HTML export is experimental. Everything else passes
-// through: the paged-export warnings that used to be filtered here were a real
+// through; the paged-export warnings once filtered here turned out to be a real
 // symptom (eval running against the wrong target), not noise.
 const NOISE: RegExp[] = [
   /html export is under active development/,
@@ -91,52 +101,49 @@ function typst(args: string[]): string {
 }
 
 const COMMON = ["--features", "html", "--root", ROOT];
-// `compile` takes the target from --format; `eval` needs it spelled out. Under
-// the default paged target eval drops html.elem content, taking the metadata
-// inside it (frontmatter, script and style markers) with it.
+// `compile` takes its target from --format; `eval` needs it spelled out. Under
+// the default paged target eval drops html.elem content, and the metadata
+// nested inside it goes too.
 const HTML = COMMON;
 const EVAL = [...COMMON, "--target", "html"];
 
-// Full HTML document, to stdout.
 function compileHtml(file: string): string {
   return typst(["compile", ...HTML, "--format", "html", file, "-"]);
 }
 
-// Run a query against a page, parse the JSON result.
 function evalQuery<T = unknown>(file: string, expr: string): T {
   const out = typst(["eval", ...EVAL, "--format", "json", "--in", file, expr]);
   return JSON.parse(out);
 }
 
-function pageMeta(file: string): PageMeta {
-  return evalQuery<PageMeta>(file, "query(<page-meta>).map(it => it.value).at(0, default: (:))");
+// Every channel in one query. A spawn costs far more than the compile, so
+// asking five times over would triple the build. Memoized because pass 1 reads
+// posts before pass 2 renders them.
+const PAGE_DATA = `(
+  meta: query(<page-meta>).map(it => it.value).at(0, default: (:)),
+  scripts: query(<inline-script>).map(it => it.value),
+  scriptSrcs: query(<script-src>).map(it => it.value),
+  styleSrcs: query(<style-src>).map(it => it.value),
+  headTags: query(<head-tag>).map(it => it.value),
+)`;
+
+const dataCache = new Map<string, PageData>();
+function pageData(file: string): PageData {
+  let d = dataCache.get(file);
+  if (!d) {
+    d = evalQuery<PageData>(file, PAGE_DATA);
+    dataCache.set(file, d);
+  }
+  return d;
 }
 
-function pageScripts(file: string): string[] {
-  return evalQuery<string[]>(file, "query(<inline-script>).map(it => it.value)");
-}
-
-// #script(...) paths, relative to the .typ.
-function pageScriptSrcs(file: string): string[] {
-  return evalQuery<string[]>(file, "query(<script-src>).map(it => it.value)");
-}
-
-// #style(...) sheets and #head(...) tags.
-function pageStyleSrcs(file: string): string[] {
-  return evalQuery<string[]>(file, "query(<style-src>).map(it => it.value)");
-}
-function pageHeadTags(file: string): HeadTag[] {
-  return evalQuery<HeadTag[]>(file, "query(<head-tag>).map(it => it.value)");
-}
-
-// "/..." is root-absolute; otherwise relative to the referencing .typ.
+// "/..." is root-absolute, otherwise relative to the referencing .typ.
 function resolveAsset(fromFile: string, p: string): string {
   return p.startsWith("/") ? join(ROOT, p.slice(1)) : resolve(dirname(fromFile), p);
 }
 
-// lib/config.typ is the single source for site-wide settings; read it once.
-// Nav entries name a source file, so a rename or typo fails here rather than
-// shipping a dead link.
+// Read once per build. Nav entries name a source file, so a rename or typo
+// fails here instead of shipping a dead link.
 function siteConfig(): SiteConfig {
   const out = typst([
     "eval", ...EVAL, "--format", "json",
@@ -151,9 +158,8 @@ function siteConfig(): SiteConfig {
   return site;
 }
 
-// page-url (lib/config.typ) and the output paths below are two expressions of
-// one rule. Check them against each other so a divergence is a build error
-// rather than a 404 nobody notices.
+// page-url and the output paths below express one rule twice, so check them
+// against each other rather than discover the mismatch as a 404.
 function verifyPageUrls(files: string[]): void {
   if (files.length === 0) return;
   const sources = files.map((f) => "/" + relative(ROOT, f).split(sep).join("/"));
@@ -166,8 +172,7 @@ function verifyPageUrls(files: string[]): void {
   files.forEach((file, i) => {
     const written = relative(CONTENT, file).replace(/\.typ$/, ".html").split(sep).join("/");
     const url = urls[i];
-    // A URL ending in "/" is served by that directory's index.html.
-    const target = url.endsWith("/") ? `${url.slice(1)}index.html` : url.slice(1);
+    const target = url.endsWith("/") ? `${url.slice(1)}index.html` : url.slice(1); // dir URLs serve index.html
     if (target !== written) {
       throw new Error(
         `page-url("${sources[i]}") = "${url}", which needs ${target}, ` +
@@ -177,18 +182,20 @@ function verifyPageUrls(files: string[]): void {
   });
 }
 
-// --- script (TypeScript/JavaScript) helpers --------------------------------
+//#endregion
 
-// Strip TS types to browser JS. Strip-only, which is all Node still exposes:
-// types are blanked in place, so line numbers survive and no source map is
-// needed. Non-erasable syntax (enum, namespace) throws; tsconfig's
-// erasableSyntaxOnly flags it in the editor first. Per-file, no bundling.
+//#region assets
+
+// Strip-only, which is all Node still exposes. Types are blanked in place, so
+// line numbers survive without a source map. Non-erasable syntax (enum,
+// namespace) throws; tsconfig's erasableSyntaxOnly catches it in the editor
+// first. Per-file, no bundling.
 function transpile(code: string): string {
   return stripTypeScriptTypes(code);
 }
 
-// Public URL/path for a compiled script: content/ mirrors its path
-// (content/misc/x.ts -> /misc/x.js); anything else lands under /scripts/.
+// content/ mirrors its path (content/misc/x.ts -> /misc/x.js); anything else
+// lands under /scripts/.
 function scriptOutput(srcAbs: string): { outRel: string; url: string } {
   let rel = relative(ROOT, srcAbs).split(sep).join("/");
   if (rel.startsWith("content/")) rel = rel.slice("content/".length);
@@ -197,7 +204,6 @@ function scriptOutput(srcAbs: string): { outRel: string; url: string } {
   return { outRel, url: "/" + outRel };
 }
 
-// Compile a script to dist once; return its URL.
 const scriptCache = new Map<string, string>(); // srcAbs -> url
 function emitScript(srcAbs: string): string {
   if (scriptCache.has(srcAbs)) return scriptCache.get(srcAbs)!;
@@ -212,8 +218,7 @@ function emitScript(srcAbs: string): string {
   return url;
 }
 
-// Copy a stylesheet to dist once; return its URL. Files outside content/ land
-// under /styles/.
+// Same path mapping, but files outside content/ land under /styles/.
 const styleCache = new Map<string, string>(); // srcAbs -> url
 function emitStyle(srcAbs: string): string {
   if (styleCache.has(srcAbs)) return styleCache.get(srcAbs)!;
@@ -229,7 +234,6 @@ function emitStyle(srcAbs: string): string {
   return url;
 }
 
-// A #head(...) marker as a head tag; void tags have no closer.
 const VOID_TAGS = new Set(["link", "meta", "base", "br", "hr", "img", "input"]);
 function renderHeadTag({ tag, attrs }: HeadTag): string {
   const a = Object.entries(attrs || {})
@@ -238,7 +242,9 @@ function renderHeadTag({ tag, attrs }: HeadTag): string {
   return VOID_TAGS.has(tag) ? `<${tag}${a}>` : `<${tag}${a}></${tag}>`;
 }
 
-// --- filesystem helpers -----------------------------------------------------
+//#endregion
+
+//#region page assembly
 
 function findTyp(dir: string): string[] {
   const out: string[] = [];
@@ -258,15 +264,15 @@ function extractBody(html: string): string {
 
 const uniq = <T>(arr: T[]): T[] => [...new Set(arr)];
 
-// --- page shell -------------------------------------------------------------
-
+// Templates emit <main> and the footer, so this contributes only <head> and the
+// site header.
 function shell({ title, siteName, nav: navItems, bodyHtml, headStyles = [], headTags = [], headScripts = [], scripts = [] }: ShellOptions): string {
   const nav = navItems.map((n) => `<a href="${n.href}">${n.label}</a>`).join("");
   const styleLinks = headStyles
     .map((href) => `<link rel="stylesheet" href="${href}">`)
     .join("\n");
-  // type="module" is deferred: runs after DOM parse, in order (head before
-  // body). Modules are isolated, so top-level const/let across toys don't clash.
+  // type="module" is deferred: runs after DOM parse, in order, head before
+  // body. Modules are isolated, so top-level const/let across toys don't clash.
   const headScriptTags = headScripts
     .map((src) => `<script type="module" src="${src}"></script>`)
     .join("\n");
@@ -300,7 +306,7 @@ ${scriptTags}
 `;
 }
 
-// --- build ------------------------------------------------------------------
+//#endregion
 
 export function build(): void {
   rmSync(DIST, { recursive: true, force: true });
@@ -310,14 +316,15 @@ export function build(): void {
   const pages = findTyp(CONTENT);
   verifyPageUrls(pages);
 
-  // Pass 1: blog frontmatter -> posts.json (read by blog/index.typ).
+  // Blog frontmatter -> posts.json, which blog/index.typ and the home page read
+  // at compile time, so it has to land before anything compiles.
   const blogDir = join(CONTENT, "blog");
   if (existsSync(blogDir)) {
     const posts: Post[] = [];
     for (const file of findTyp(blogDir)) {
       const slug = relative(blogDir, file).replace(/\.typ$/, "");
       if (slug === "index") continue; // the listing page itself
-      const meta = pageMeta(file);
+      const meta = pageData(file).meta;
       posts.push({
         page: "/" + relative(ROOT, file).split(sep).join("/"),
         title: meta.title ?? slug,
@@ -329,22 +336,20 @@ export function build(): void {
     writeFileSync(BLOG_POSTS, JSON.stringify(posts, null, 2));
   }
 
-  // Pass 2: compile pages.
   let count = 0;
   for (const file of pages) {
     const rel = relative(CONTENT, file).replace(/\.typ$/, ".html");
-    const meta = pageMeta(file);
+    const data = pageData(file);
     const bodyHtml = extractBody(compileHtml(file));
 
-    // Head channel, deduplicated: #style sheets, #head tags, #script files.
-    const headStyles = uniq(pageStyleSrcs(file).map((p) => emitStyle(resolveAsset(file, p))));
-    const headTags = uniq(pageHeadTags(file).map(renderHeadTag));
-    const headScripts = uniq(pageScriptSrcs(file).map((p) => emitScript(resolveAsset(file, p))));
-    // Inline blocks: transpile, inject before </body>. (#toc() ships its own
-    // scroll-spy through this same channel, so the SSG needs no TOC logic.)
-    const scripts = pageScripts(file).map(transpile);
+    const headStyles = uniq(data.styleSrcs.map((p) => emitStyle(resolveAsset(file, p))));
+    const headTags = uniq(data.headTags.map(renderHeadTag));
+    const headScripts = uniq(data.scriptSrcs.map((p) => emitScript(resolveAsset(file, p))));
+    // #toc() ships its scroll-spy through this same channel, so there's no TOC
+    // logic here.
+    const scripts = data.scripts.map(transpile);
     const html = shell({
-      title: meta.title, siteName: site.name, nav: site.nav,
+      title: data.meta.title, siteName: site.name, nav: site.nav,
       bodyHtml, headStyles, headTags, headScripts, scripts,
     });
 
@@ -355,7 +360,6 @@ export function build(): void {
     count += 1;
   }
 
-  // Static assets copied to the site root.
   if (existsSync(STATIC)) cpSync(STATIC, DIST, { recursive: true });
 
   console.log(`\nDone: ${count} page(s) -> ${relative(ROOT, DIST)}/`);
