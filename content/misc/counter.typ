@@ -1,5 +1,5 @@
 #import "/lib/site.typ": *
-#show: template
+#show: base
 #meta(title: "Counter")
 #script("counter.ts")
 

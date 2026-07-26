@@ -1,5 +1,5 @@
 #import "/lib/site.typ": *
-#show: template
+#show: base
 #meta(title: "Home")
 
 = Andrew Sen
@@ -12,5 +12,5 @@ JavaScript directly in the Typst source.
 
 == Around here
 
-- #link("/blog/")[Blog] --- writing
-- #link("/misc/")[Misc] --- toys and experiments
+- #page-link("/content/blog/index.typ")[Blog] --- writing
+- #page-link("/content/misc/index.typ")[Misc] --- toys and experiments

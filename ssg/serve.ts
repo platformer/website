@@ -6,9 +6,10 @@
 // queries + TS transpile + templating), so a change re-runs the whole build().
 
 import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join, extname, resolve } from "node:path";
-import { build, GENERATED } from "./build.mjs";
+import { build, GENERATED } from "./build.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const DIST = join(ROOT, "dist");
@@ -17,7 +18,7 @@ const IGNORE = new Set(GENERATED); // build outputs; skip so they don't self-tri
 const PORT = process.env.PORT || 4321;
 const POLL_MS = 300;
 
-const TYPES = {
+const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -29,22 +30,22 @@ const TYPES = {
 };
 
 // --- live reload (Server-Sent Events) ---------------------------------------
-const clients = new Set();
+const clients = new Set<ServerResponse>();
 const RELOAD_SNIPPET =
   `<script>new EventSource("/__livereload").onmessage=()=>location.reload()</script>`;
 
-function broadcastReload() {
+function broadcastReload(): void {
   for (const res of clients) res.write("data: reload\n\n");
 }
 
 // --- build ------------------------------------------------------------------
 // Guarded so a Typst error doesn't kill the server.
-function safeBuild() {
+function safeBuild(): boolean {
   try {
     build();
     return true;
   } catch (e) {
-    console.error("\nbuild failed:", e.message, "\n");
+    console.error("\nbuild failed:", (e as Error).message, "\n");
     return false;
   }
 }
@@ -52,9 +53,9 @@ function safeBuild() {
 // --- source polling ---------------------------------------------------------
 // Async: stat is slow on /mnt/c, so keep it off the event loop or it stalls
 // serving. Stats fan out onto the libuv threadpool.
-async function snapshot() {
-  const seen = new Map();
-  const walk = async (dir) => {
+async function snapshot(): Promise<Map<string, number>> {
+  const seen = new Map<string, number>();
+  const walk = async (dir: string): Promise<void> => {
     let entries;
     try {
       entries = await readdir(dir, { withFileTypes: true });
@@ -73,14 +74,14 @@ async function snapshot() {
   return seen;
 }
 
-function changed(a, b) {
+function changed(a: Map<string, number>, b: Map<string, number>): boolean {
   if (a.size !== b.size) return true;
   for (const [path, mtime] of a) if (b.get(path) !== mtime) return true;
   return false;
 }
 
 // --- file serving -----------------------------------------------------------
-async function resolveFile(pathname) {
+async function resolveFile(pathname: string): Promise<string> {
   let file = join(DIST, pathname);
   try {
     if ((await stat(file)).isDirectory()) file = join(file, "index.html");
@@ -90,8 +91,8 @@ async function resolveFile(pathname) {
   return file;
 }
 
-const server = createServer(async (req, res) => {
-  const pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
+const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://localhost").pathname);
 
   if (pathname === "/__livereload") {
     res.writeHead(200, {
@@ -134,7 +135,7 @@ server.listen(PORT, async () => {
 
   // Self-scheduling so polls never overlap.
   let prev = await snapshot();
-  const tick = async () => {
+  const tick = async (): Promise<void> => {
     const next = await snapshot();
     if (changed(prev, next)) {
       console.log("change detected, rebuilding...");

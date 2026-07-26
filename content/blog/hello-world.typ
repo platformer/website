@@ -1,5 +1,5 @@
 #import "/lib/site.typ": *
-#show: template
+#show: blog
 #meta(
   title: "Hello, World",
   date: "2026-07-21",

@@ -86,3 +86,30 @@
     field("body", types.option(content), required: true),
   ),
 )
+
+// Site footer. A sibling of <main>, so it keeps its contentinfo landmark.
+#let site-footer() = elem(
+  "footer",
+  [© #datetime.today().year() #site.name],
+  class: "site-footer",
+)
+
+// Table of contents. Place it in a post; it links every section (== and deeper)
+// and renders nothing if there are fewer than two. Typst assigns the heading
+// ids and anchors; the CSS floats it into the left margin when there's room.
+#let toc() = context {
+  let heads = query(heading).filter(it => it.level >= 2)
+  if heads.len() >= 2 {
+    _uses-css
+    elem("div", elem("nav", {
+      elem("p", "On this page", class: "toc-title")
+      elem("ul", {
+        for h in heads {
+          elem("li", link(h.location(), h.body), class: "toc-l" + str(h.level))
+        }
+      })
+    }, class: "toc"), class: "toc-col")
+    // Ship the highlight behavior with the element via the inline-script channel.
+    raw(read("/lib/scrollspy.ts"), lang: "inline-script")
+  }
+}

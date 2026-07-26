@@ -1,6 +1,8 @@
 // Frontmatter, HTML element helpers, and the <head> asset channel. The SSG
 // reads the metadata these emit.
 
+#import "/lib/config.typ": *
+
 // Page frontmatter. Posts want title + date; summary is optional.
 #let meta(..args) = [#metadata(args.named()) <page-meta>]
 
@@ -16,6 +18,10 @@
 // Inline span / button carrying an id for scripts to reach.
 #let id(name, body) = elem("span", body, id: name)
 #let button(name, body) = elem("button", body, id: name)
+
+// Link to another page by its source file, so renames can't leave a dead URL.
+//   #page-link("/content/misc/counter.typ")[Counter]
+#let page-link(path, body) = link(page-url(path), body)
 
 // Head channel. The SSG collects these into <head>, deduplicated.
 #let style(path) = [#metadata(path) <style-src>] // stylesheet; path relative to the file, or /root-absolute

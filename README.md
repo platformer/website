@@ -14,20 +14,27 @@ content/            pages (each *.typ becomes a page)
   misc/index.typ      -> /misc/
   misc/*.typ          -> /misc/<slug>.html
 lib/                Typst library, layered:
+  config.typ          site name, nav, source-path -> URL mapping
   base.typ            frontmatter, element helpers, head channel
-  elements.typ        components (callouts, details, quotes, ...)
-  templates.typ       page template and theme
+  elements.typ        components (callouts, details, quotes, toc, ...)
+  templates.typ       templates (base, blog) and the shared theme
   site.typ            barrel; pages import this
+  components.css      component styles, injected on use
+  scrollspy.ts        behaviour shipped by #toc()
 static/             copied verbatim to the site root (styles.css, images)
-ssg/build.mjs       the generator
-ssg/serve.mjs       dev server
+ssg/build.ts        the generator
+ssg/serve.ts        dev server
 dist/               build output (git-ignored)
 ```
 
+Everything is TypeScript: Node 24 runs `ssg/*.ts` directly via native type
+stripping, and browser scripts are transpiled during the build.
+
 ## Develop
 
-Needs [Typst](https://github.com/typst/typst) 0.13+ on your `PATH` and Node 20+.
-The [elembic](https://typst.app/universe/package/elembic/) package is fetched on
+Needs [Typst](https://github.com/typst/typst) 0.13+ on your `PATH` and Node 24+
+(the SSG is TypeScript, run directly with no build step). The
+[elembic](https://typst.app/universe/package/elembic/) package is fetched on
 first compile (one network round-trip, then cached).
 
 ```sh
@@ -42,24 +49,64 @@ doesn't fire on the WSL2 `/mnt/c` mount.
 If Typst isn't on your `PATH`, point the build at it with
 `TYPST_BIN=/path/to/typst npm run build`.
 
+`tsconfig.json` is there for the editor and for `npx tsc --noEmit`; nothing in
+the build reads it. Type annotations are stripped, never checked, at runtime, so
+`erasableSyntaxOnly` is on to reject syntax Node can't strip (`enum`,
+`namespace`, parameter properties). Editor types for `node:*` and `process` come
+from `@types/node`.
+
 ## Writing a page
 
-Every page opens the same way:
+Every page picks a template. `base` covers the home page, section indexes and
+toys; `blog` adds a table of contents:
 
 ```typ
 #import "/lib/site.typ": *
-#show: template
+#show: base
 #meta(title: "My Page")
 
 = Heading
 Body text...
 ```
 
+A post looks the same with `#show: blog`. Both live in `lib/templates.typ`, so
+adding a template for a new page type means adding one function there.
+
 Blog posts add a `date`, and optionally a `summary`, which feed the blog index:
 
 ```typ
 #meta(title: "My Post", date: "2026-07-21", summary: "One-line teaser.")
 ```
+
+## Site config and linking
+
+`lib/config.typ` holds the site name and the nav. The SSG reads it once per
+build, so these aren't duplicated in the generator:
+
+```typ
+#let site = (
+  name: "Andrew Sen",
+  nav: (
+    (label: "Blog", page: "/content/blog/index.typ"),
+    (label: "Misc", page: "/content/misc/index.typ"),
+  ),
+)
+```
+
+Nav entries name a page's **source file**, not its URL. `page-url` in the same
+file derives the URL (`/content/blog/index.typ` becomes `/blog/`). Two checks
+keep that honest: the build fails if a nav entry names a file that doesn't
+exist, and it fails if `page-url` and the paths the build actually writes ever
+disagree. So a rename can't leave a dead link, and changing the URL scheme
+can't silently half-apply.
+
+Link between pages the same way, with `#page-link`:
+
+```typ
+#page-link("/content/misc/counter.typ")[Counter]   // -> /misc/counter.html
+```
+
+Use plain `#link` for external URLs and anchors.
 
 ## Scripts (TypeScript or JavaScript)
 
@@ -98,9 +145,12 @@ Compiled output mirrors the source path, so `content/misc/counter.ts` becomes
 `/misc/counter.js`; a script referenced from elsewhere in the repo goes under
 `/scripts/`. A file used by several pages is compiled once.
 
-Each file is transpiled on its own: types are stripped and enums lowered, but
-cross-file `import`s are not bundled, so keep script files self-contained. Swap
-the transpile step for esbuild if you need bundling later.
+Each file is transpiled on its own: annotations are blanked in place, so line
+numbers still match the source and no source map is needed. Two limits follow.
+Cross-file `import`s are not bundled, so keep script files self-contained. And
+only erasable syntax works: `enum`, `namespace` and parameter properties throw,
+which `erasableSyntaxOnly` in `tsconfig.json` catches in the editor first. Swap
+the transpile step for esbuild if you outgrow either.
 
 ### Tagging content for scripts
 
@@ -145,17 +195,22 @@ that use a component. The interactive ones are native HTML, with no JavaScript.
 - `#blockquote(by: [Author])[...]`: a quotation with optional attribution.
 - `#popover("unique-id", "trigger")[...]`: a button-triggered popover using the
   native Popover API. The `id` must be unique on the page.
+- `#toc()`: the table of contents. The `blog` template places it, so posts get
+  one automatically. It renders nothing unless the page has at least two
+  sections, links every `==` and `===` heading, floats into the left margin when
+  the window is wide enough, and ships its own scroll-spy.
 
 ### The theme
 
 Because the components are elembic elements, their defaults live in one place
-rather than at each call site. The `theme` in `lib/templates.typ`, applied by
-`template`, holds them as `set_` rules:
+rather than at each call site. The `theme` in `lib/templates.typ`, shared by
+every template, holds them as `set_` rules:
 
 ```typ
 #let theme(body) = {
-  show: e.set_(callout, kind: "note")   // default callout colour
-  show: e.set_(details, open: false)    // collapsibles start closed
+  show raw.where(lang: "inline-script"): ...  // hand scripts to the SSG
+  show: e.set_(callout, kind: "note")         // default callout colour
+  show: e.set_(details, open: false)          // collapsibles start closed
   body
 }
 ```

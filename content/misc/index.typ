@@ -1,9 +1,9 @@
 #import "/lib/site.typ": *
-#show: template
+#show: base
 #meta(title: "Misc")
 
 = Misc
 
 Toys, experiments, and things that don't fit anywhere else.
 
-- #link("/misc/counter.html")[Counter] --- a tiny interactive demo
+- #page-link("/content/misc/counter.typ")[Counter] --- a tiny interactive demo

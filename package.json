@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node ssg/build.mjs",
-    "dev": "node ssg/serve.mjs"
+    "build": "node --disable-warning=ExperimentalWarning ssg/build.ts",
+    "dev": "node --disable-warning=ExperimentalWarning ssg/serve.ts",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
   }
 }
