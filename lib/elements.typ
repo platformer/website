@@ -76,7 +76,9 @@
     html.elem("button", attrs: (
       class: "popover-trigger", popovertarget: it.id, style: "anchor-name: " + anchor,
     ), it.trigger)
-    html.elem("div", attrs: (
+    // A span, not a div: the panel sits mid-sentence, and a block element here
+    // would split the paragraph around it.
+    html.elem("span", attrs: (
       id: it.id, popover: "", class: "popover", style: "position-anchor: " + anchor,
     ), it.body)
   },

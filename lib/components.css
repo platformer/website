@@ -139,6 +139,10 @@
   color: var(--accent);
   cursor: pointer;
 }
+/* Scoped to the open state. Author styles beat the UA sheet whatever the
+   specificity, so an unscoped display would defeat [popover]'s own hiding and
+   leave the panel on screen. */
+.popover:popover-open { display: block; }
 .popover {
   max-width: 22rem;
   padding: 0.85rem 1.1rem;
