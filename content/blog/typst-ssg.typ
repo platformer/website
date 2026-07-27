@@ -9,9 +9,9 @@
 = How this site is built
 
 The source of this site is #link("https://typst.app")[Typst], the typesetting
-language, compiled to HTML by about 350 lines of TypeScript. There is no
-framework and no bundler, and one package dependency. This post covers why
-Typst, the mechanism the whole thing rests on, and what the generator actually
+language, compiled to HTML by about 500 lines of TypeScript. There is no
+framework, no bundler, and one dependency, which is a types package. This post
+covers why Typst, the mechanism the whole thing rests on, and what the generator
 does with a page.
 
 == Why Typst
@@ -44,8 +44,7 @@ Typst 0.13 added an HTML export target, and it is semantic-first. A `=` heading
 becomes an `<h2>`, `*bold*` becomes `<strong>`, and a fenced code block becomes
 `<pre><code>` with syntax highlighting already applied.
 
-What it does not do is carry Typst's visual model across. I tested a range of
-styling to see what survives:
+What it does not do is carry Typst's visual model across:
 
 #table(
   columns: 2,
@@ -55,10 +54,8 @@ styling to see what survives:
   [`#align`, `#pad`], [ignored, with a warning],
 )
 
-That is a real constraint, and it settled a question I would otherwise have kept
-relitigating. Presentation lives in CSS. Typst owns structure, semantics, and
-class names. Every attempt I have seen to blur that line ends up worse than
-accepting it.
+So presentation lives in CSS, and Typst owns structure, semantics and class
+names. That division is worth taking as given rather than fighting.
 
 #note[
   There is an escape hatch. `html.frame` renders Typst content to inline SVG and
@@ -245,27 +242,26 @@ made the build three times slower than asking one.
 == Things that bit me
 
 #warn(title: "Wrong target")[
-  `typst eval` defaults to the paged target, where `html.elem` content is
-  discarded. The moment templates started wrapping pages in `<main>`, every
-  metadata query silently returned nothing and page titles quietly fell back to
-  the site name. The fix is `--target html` on eval, which those queries should
-  have used all along. I had been filtering the warning that said so.
+  `typst eval` defaults to the paged target, which discards `html.elem`
+  content. Once the templates wrapped each page in `<main>`, every metadata
+  query returned nothing and titles fell back to the site name, with no error.
+  Pass `--target html` to eval so it introspects the same document the compile
+  produces.
 ]
 
-A few smaller ones. Media queries resolve `rem` against the browser default
-rather than your root font size, so a `72rem` breakpoint fires at 1152px and not
-1296px, which put the sidebar on screen a full 150px before there was room for
-it. Elembic reserves `label` as a field name. And `stripTypeScriptTypes` no
-longer accepts its `transform` mode in current Node types, which is a good
-prompt to stop using syntax that cannot be erased.
+Three smaller ones. Media queries resolve `rem` against the browser default
+rather than your root font size, so with an 18px root a `72rem` breakpoint fires
+at 1152px rather than 1296px. Author styles beat the user agent stylesheet
+whatever the specificity, so styling `display` on a `[popover]` unscoped leaves
+the panel permanently open. And elembic reserves `label` as a field name.
 
 == Worth it?
 
-For a personal site, yes. The parts I expected to be painful, embedding
-JavaScript and building a table of contents, turned out to be the parts Typst is
-best at, because both are just introspection. The friction was in HTML export
-being young: features that map cleanly to PDF sometimes do not map at all, and
-the error messages for that are quiet rather than loud.
+For a personal site, yes. Embedding JavaScript and generating a table of
+contents are the parts that sound hardest and are in fact the easiest, because
+both reduce to introspection. The friction is all in HTML export being young:
+features that map cleanly to PDF sometimes do not map at all, and they tend to
+fail quietly rather than loudly.
 
-The whole thing is under 500 lines including the stylesheet. If you want to read
-it, the #link("https://github.com/platformer/website")[repository] is public.
+About 1300 lines all in, counting the Typst library and the stylesheets. The
+#link("https://github.com/platformer/website")[repository] is public.

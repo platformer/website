@@ -6,19 +6,17 @@
 // Posts want title + date; summary is optional.
 #let meta(..args) = [#metadata(args.named()) <page-meta>]
 
-// html.elem with an optional id. Everything below funnels through this; ids
-// have to sit on a real element, since Typst labels don't survive to HTML.
+// html.elem with an optional id; everything below is built from it.
 #let elem(tag, body, id: none, ..attrs) = {
   let a = attrs.named()
   if id != none { a.insert("id", id) }
   html.elem(tag, attrs: a, body)
 }
 
-// Inline span / button carrying an id for scripts to reach.
+// An id a script can find.
 #let id(name, body) = elem("span", body, id: name)
 #let button(name, body) = elem("button", body, id: name)
 
-// Link by source file, so renames can't leave a dead URL.
 //   #page-link("/content/misc/counter.typ")[Counter]
 #let page-link(path, body) = link(page-url(path), body)
 

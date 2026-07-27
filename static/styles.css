@@ -23,6 +23,14 @@
   --tip:       var(--c-green);
   --warn:      var(--c-paprika);
   --note:      var(--c-blue);
+
+  --tok-kw:    #c02a39;
+  --tok-fn:    #3a58b5;
+  --tok-str:   #157a0e;
+  --tok-num:   #a4014e;
+  --tok-com:   #6a6a72;
+  --tok-punct: #2f2f38;
+  --tok-esc:   #14606a;
 }
 
 /* metrics: values other rules derive from, including components.css and the
@@ -61,12 +69,26 @@
     --tip:     color-mix(in srgb, var(--c-green) 62%, white);
     --warn:    color-mix(in srgb, var(--c-paprika) 78%, white);
     --note:    var(--c-blue);
+
+    --tok-kw:    #ff7d8a;
+    --tok-fn:    #82aaff;
+    --tok-str:   #a5d66f;
+    --tok-num:   #ffa168;
+    --tok-com:   #8b8fa3;
+    --tok-punct: #ccd0dc;
+    --tok-esc:   #7bd4f0;
   }
 }
 
 /* #endregion */
 
 /* #region base */
+
+/* Nothing here may cause a horizontal scrollbar at phone widths. Fix the
+   offending element (scale it, wrap it, or let it scroll on its own axis);
+   never reach for overflow-x: hidden on a container, which hides genuinely
+   overflowing content from anyone who needs to reach it. */
+
 * { box-sizing: border-box; }
 
 html {
@@ -231,6 +253,15 @@ pre {
 }
 pre code { background: none; padding: 0; }
 
+/* Token classes the build swaps in for Typst's inline colours. */
+.tok-kw    { color: var(--tok-kw); }
+.tok-fn    { color: var(--tok-fn); }
+.tok-str   { color: var(--tok-str); }
+.tok-num   { color: var(--tok-num); }
+.tok-com   { color: var(--tok-com); font-style: italic; }
+.tok-punct { color: var(--tok-punct); }
+.tok-esc   { color: var(--tok-esc); }
+
 /* #endregion */
 
 /* #region buttons */
@@ -258,11 +289,13 @@ button:active { transform: translateY(1px); }
   padding: 0;
   border: none;
   background: none;
-  overflow: hidden;
   color: var(--brand);
   /* Must be monospace or the art shears; a bare pre inherits the body font. */
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.85rem;
+  /* The art is a fixed 46 characters, so size it against the viewport to keep
+     it inside the column on a phone. ~0.6em per character: 46 * 0.6 * 3.1vw
+     stays under the available width down to a 320px screen. */
+  font-size: clamp(0.5rem, 3.1vw, 0.85rem);
   line-height: 1.1;
   white-space: pre;
   user-select: none;

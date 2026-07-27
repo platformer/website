@@ -1,9 +1,9 @@
-/* Component styles, injected through the head channel only on pages that use
-   one. Tokens come from static/styles.css. */
+/* Component styles, loaded only where a component is used. Tokens come from
+   static/styles.css. */
 
 /* #region toc */
-/* Rendered inline in the article; on wide screens it floats into the left
-   margin, anchored to the centred <main>. Hidden when there's no room. */
+/* Floats into the left margin, anchored to the centred <main>. Hidden when
+   there's no room for it. */
 .toc-col { display: none; }
 /* The margin has to hold the TOC on both sides of the centered column, so the
    breakpoint is --max + 2*(--toc-w + --gap). Media queries can't read custom
@@ -50,9 +50,8 @@
 .toc a.active { color: var(--accent); border-left-color: var(--brand); }
 .toc-l3 a { padding-left: calc(var(--toc-indent) * 2); font-size: 0.95em; }
 
-/* Box tops already match, but leading scales with font size, so the TOC label
-   reads as sitting high. Trimming both to cap height aligns the letters
-   themselves, with no fudge factor. */
+/* Align the letters rather than the line boxes, whose leading differs with
+   font size. */
 @supports (text-box-trim: trim-start) {
   .toc-title,
   main > h2:first-of-type {
@@ -139,9 +138,8 @@
   color: var(--accent);
   cursor: pointer;
 }
-/* Scoped to the open state. Author styles beat the UA sheet whatever the
-   specificity, so an unscoped display would defeat [popover]'s own hiding and
-   leave the panel on screen. */
+/* Must stay scoped to the open state: author styles beat the UA sheet whatever
+   the specificity, so an unscoped display leaves the panel permanently on. */
 .popover:popover-open { display: block; }
 .popover {
   max-width: 22rem;

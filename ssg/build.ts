@@ -74,9 +74,8 @@ interface ShellOptions {
 
 //#region typst
 
-// The standing notice that HTML export is experimental. Everything else passes
-// through; the paged-export warnings once filtered here turned out to be a real
-// symptom (eval running against the wrong target), not noise.
+// The standing notice that HTML export is experimental. Everything else,
+// warnings included, passes through.
 const NOISE: RegExp[] = [
   /html export is under active development/,
   /its behaviour may change/,
@@ -101,9 +100,9 @@ function typst(args: string[]): string {
 }
 
 const COMMON = ["--features", "html", "--root", ROOT];
-// `compile` takes its target from --format; `eval` needs it spelled out. Under
-// the default paged target eval drops html.elem content, and the metadata
-// nested inside it goes too.
+// `compile` takes its target from --format; `eval` needs it spelled out, or it
+// runs against the paged target and drops html.elem content and the metadata
+// inside it.
 const HTML = COMMON;
 const EVAL = [...COMMON, "--target", "html"];
 
@@ -116,9 +115,8 @@ function evalQuery<T = unknown>(file: string, expr: string): T {
   return JSON.parse(out);
 }
 
-// Every channel in one query. A spawn costs far more than the compile, so
-// asking five times over would triple the build. Memoized because pass 1 reads
-// posts before pass 2 renders them.
+// Every channel in one query: a spawn costs far more than the compile, so
+// splitting this up triples the build. Memoized for the second pass.
 const PAGE_DATA = `(
   meta: query(<page-meta>).map(it => it.value).at(0, default: (:)),
   scripts: query(<inline-script>).map(it => it.value),
@@ -158,8 +156,8 @@ function siteConfig(): SiteConfig {
   return site;
 }
 
-// page-url and the output paths below express one rule twice, so check them
-// against each other rather than discover the mismatch as a 404.
+// page-url and the output paths below express one rule twice; a mismatch is a
+// build error rather than a 404.
 function verifyPageUrls(files: string[]): void {
   if (files.length === 0) return;
   const sources = files.map((f) => "/" + relative(ROOT, f).split(sep).join("/"));
@@ -186,10 +184,8 @@ function verifyPageUrls(files: string[]): void {
 
 //#region assets
 
-// Strip-only, which is all Node still exposes. Types are blanked in place, so
-// line numbers survive without a source map. Non-erasable syntax (enum,
-// namespace) throws; tsconfig's erasableSyntaxOnly catches it in the editor
-// first. Per-file, no bundling.
+// Types are blanked in place, so line numbers survive without a source map.
+// Non-erasable syntax (enum, namespace) throws. Per-file, no bundling.
 function transpile(code: string): string {
   return stripTypeScriptTypes(code);
 }
@@ -255,6 +251,29 @@ function findTyp(dir: string): string[] {
     else if (name.endsWith(".typ")) out.push(full);
   }
   return out;
+}
+
+// Typst bakes its light-mode palette into each token as an inline style, which
+// CSS can't restyle. Swap the known colours for classes; anything unmapped keeps
+// Typst's own.
+const TOKENS: Record<string, string> = {
+  "#d73948": "kw",
+  "#4b69c6": "fn",
+  "#198810": "str",
+  "#b60157": "num",
+  "#74747c": "com",
+  "#6b6b6f": "punct",
+  "#1d6c76": "esc",
+};
+
+function classifyTokens(html: string): string {
+  return html.replace(
+    /style="color: (#[0-9a-f]{6})"/gi,
+    (whole, hex) => {
+      const name = TOKENS[hex.toLowerCase()];
+      return name ? `class="tok-${name}"` : whole;
+    },
+  );
 }
 
 function extractBody(html: string): string {
@@ -340,7 +359,7 @@ export function build(): void {
   for (const file of pages) {
     const rel = relative(CONTENT, file).replace(/\.typ$/, ".html");
     const data = pageData(file);
-    const bodyHtml = extractBody(compileHtml(file));
+    const bodyHtml = classifyTokens(extractBody(compileHtml(file)));
 
     const headStyles = uniq(data.styleSrcs.map((p) => emitStyle(resolveAsset(file, p))));
     const headTags = uniq(data.headTags.map(renderHeadTag));

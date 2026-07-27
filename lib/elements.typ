@@ -1,9 +1,8 @@
 #import "/lib/base.typ": *
 #import "@preview/elembic:1.1.1" as e: field, types
 
-// Components as elembic elements: typed fields, restylable in bulk from
-// templates.typ. Each registers the shared stylesheet on use; the SSG links it
-// once per page.
+// Components as elembic elements: typed fields, restyled in bulk from the theme
+// in templates.typ. Each pulls in the shared stylesheet on use.
 #let _uses-css = style("/lib/components.css")
 
 // kind sets the accent; title optional.
@@ -64,8 +63,7 @@
   ),
 )
 
-// Native Popover API; id must be unique on the page. The field is `trigger`
-// because elembic reserves `label`.
+// Native Popover API. `id` must be unique on the page.
 #let popover = e.element.declare(
   "popover",
   prefix: "site",
@@ -76,8 +74,7 @@
     html.elem("button", attrs: (
       class: "popover-trigger", popovertarget: it.id, style: "anchor-name: " + anchor,
     ), it.trigger)
-    // A span, not a div: the panel sits mid-sentence, and a block element here
-    // would split the paragraph around it.
+    // Must stay inline: a block element here splits the surrounding paragraph.
     html.elem("span", attrs: (
       id: it.id, popover: "", class: "popover", style: "position-anchor: " + anchor,
     ), it.body)
@@ -104,16 +101,19 @@
   })
 }
 
-// A sibling of <main>, so it keeps its contentinfo landmark.
+// Kept a sibling of <main> for the contentinfo landmark.
 #let site-footer() = elem(
   "footer",
-  [© #datetime.today().year() #site.name],
+  [
+    © #datetime.today().year() #site.name
+    #h(0.6em) · #h(0.6em)
+    #link(site.repo)[Source]
+  ],
   class: "site-footer",
 )
 
-// Links every section (== and deeper), or renders nothing if there are fewer
-// than two. Typst assigns the heading ids and anchors; the CSS floats it into
-// the left margin when there's room.
+// Links every section (== and deeper), or renders nothing under two. Floats
+// into the left margin where there's room for it.
 #let toc() = context {
   let heads = query(heading).filter(it => it.level >= 2)
   if heads.len() >= 2 {
@@ -126,7 +126,7 @@
         }
       })
     }, class: "toc"), class: "toc-col")
-    // Highlight behaviour ships with the element.
+    // Highlight behaviour, shipped with the element.
     raw(read("/lib/scrollspy.ts"), lang: "inline-script")
   }
 }

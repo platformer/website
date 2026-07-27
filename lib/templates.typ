@@ -1,8 +1,8 @@
 #import "/lib/elements.typ": *
 #import "@preview/elembic:1.1.1" as e
 
-// Shared by every template: component defaults, plus the channel that hands
-// ```inline-script blocks to the SSG. A page can override a set rule locally.
+// Component defaults and the inline-script channel, shared by every template.
+// A page can override any set rule locally.
 #let theme(body) = {
   show raw.where(lang: "inline-script"): it => [#metadata(it.text) <inline-script>]
   show: e.set_(callout, kind: "note")

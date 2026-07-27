@@ -1,9 +1,8 @@
 // Dev server: builds dist/, serves it, watches sources, and live-reloads the
 // browser on change (`npm run dev`).
 //
-// Polls rather than using fs.watch, since inotify doesn't fire on this repo's
-// WSL2 /mnt/c mount. `typst watch` can't drive the pipeline either, so a change
-// re-runs build().
+// Polls rather than using fs.watch: inotify doesn't fire on this repo's WSL2
+// /mnt/c mount. A change re-runs the whole build.
 
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -54,7 +53,7 @@ function safeBuild(): boolean {
 
 //#region source polling
 
-// Async because stat is slow on /mnt/c; on the event loop it stalls serving.
+// Async: stat is slow on /mnt/c and blocks serving if it runs inline.
 async function snapshot(): Promise<Map<string, number>> {
   const seen = new Map<string, number>();
   const walk = async (dir: string): Promise<void> => {
