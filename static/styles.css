@@ -346,6 +346,7 @@ button:active { transform: translateY(1px); }
 /* #endregion */
 
 /* #region footer */
+.site-footer .sep { margin: 0 0.55em; opacity: 0.6; }
 .site-footer {
   max-width: var(--max);
   margin: var(--pad-bottom) auto 0;

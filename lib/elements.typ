@@ -106,7 +106,7 @@
   "footer",
   [
     © #datetime.today().year() #site.name
-    #h(0.6em) · #h(0.6em)
+    #elem("span", [·], class: "sep")
     #link(site.repo)[Source]
   ],
   class: "site-footer",
