@@ -289,6 +289,9 @@ button:active { transform: translateY(1px); }
   padding: 0;
   border: none;
   background: none;
+  /* Undo the code-block pre rule: its overflow-x makes both axes scrollable,
+     which gives the art its own scrollbars. Sized to fit, so nothing to clip. */
+  overflow: visible;
   color: var(--brand);
   /* Must be monospace or the art shears; a bare pre inherits the body font. */
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
