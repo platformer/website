@@ -31,8 +31,7 @@ const TYPES: Record<string, string> = {
 //#region live reload (Server-Sent Events)
 
 const clients = new Set<ServerResponse>();
-const RELOAD_SNIPPET =
-  `<script>new EventSource("/__livereload").onmessage=()=>location.reload()</script>`;
+const RELOAD_SNIPPET = `<script>new EventSource("/__livereload").onmessage=()=>location.reload()</script>`;
 
 function broadcastReload(): void {
   for (const res of clients) res.write("data: reload\n\n");
@@ -63,13 +62,15 @@ async function snapshot(): Promise<Map<string, number>> {
     } catch {
       return; // dir may not exist (e.g. no static/)
     }
-    await Promise.all(entries.map(async (e) => {
-      if (e.name.startsWith(".")) return;
-      const full = join(dir, e.name);
-      if (IGNORE.has(full)) return;
-      if (e.isDirectory()) await walk(full);
-      else seen.set(full, (await stat(full)).mtimeMs);
-    }));
+    await Promise.all(
+      entries.map(async (e) => {
+        if (e.name.startsWith(".")) return;
+        const full = join(dir, e.name);
+        if (IGNORE.has(full)) return;
+        if (e.isDirectory()) await walk(full);
+        else seen.set(full, (await stat(full)).mtimeMs);
+      }),
+    );
   };
   await Promise.all(WATCH.map(walk));
   return seen;

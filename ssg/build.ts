@@ -7,8 +7,14 @@
 
 import { spawnSync } from "node:child_process";
 import {
-  readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync,
-  existsSync, statSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  cpSync,
+  existsSync,
+  statSync,
 } from "node:fs";
 import { join, relative, dirname, resolve, basename, sep } from "node:path";
 import { stripTypeScriptTypes } from "node:module";
@@ -38,15 +44,15 @@ interface HeadTag {
   attrs?: Record<string, string>;
 }
 interface Post {
-  page: string;  // source path; blog/index.typ turns it into a URL via page-url
+  page: string; // source path; blog/index.typ turns it into a URL via page-url
   title: string;
   date: string;
   summary: string;
 }
 interface NavEntry {
   label: string;
-  page: string;  // source path, e.g. /content/blog/index.typ
-  href: string;  // derived from page by lib/config.typ
+  page: string; // source path, e.g. /content/blog/index.typ
+  href: string; // derived from page by lib/config.typ
 }
 interface SiteConfig {
   name: string;
@@ -144,7 +150,10 @@ function resolveAsset(fromFile: string, p: string): string {
 // fails here instead of shipping a dead link.
 function siteConfig(): SiteConfig {
   const out = typst([
-    "eval", ...EVAL, "--format", "json",
+    "eval",
+    ...EVAL,
+    "--format",
+    "json",
     '{ import "/lib/config.typ": site; site }',
   ]);
   const site: SiteConfig = JSON.parse(out);
@@ -162,19 +171,27 @@ function verifyPageUrls(files: string[]): void {
   if (files.length === 0) return;
   const sources = files.map((f) => "/" + relative(ROOT, f).split(sep).join("/"));
   const list = sources.map((s) => JSON.stringify(s)).join(", ");
-  const urls = JSON.parse(typst([
-    "eval", ...EVAL, "--format", "json",
-    `{ import "/lib/config.typ": page-url; (${list},).map(page-url) }`,
-  ])) as string[];
+  const urls = JSON.parse(
+    typst([
+      "eval",
+      ...EVAL,
+      "--format",
+      "json",
+      `{ import "/lib/config.typ": page-url; (${list},).map(page-url) }`,
+    ]),
+  ) as string[];
 
   files.forEach((file, i) => {
-    const written = relative(CONTENT, file).replace(/\.typ$/, ".html").split(sep).join("/");
+    const written = relative(CONTENT, file)
+      .replace(/\.typ$/, ".html")
+      .split(sep)
+      .join("/");
     const url = urls[i];
     const target = url.endsWith("/") ? `${url.slice(1)}index.html` : url.slice(1); // dir URLs serve index.html
     if (target !== written) {
       throw new Error(
         `page-url("${sources[i]}") = "${url}", which needs ${target}, ` +
-        `but the build writes ${written}`,
+          `but the build writes ${written}`,
       );
     }
   });
@@ -267,13 +284,10 @@ const TOKENS: Record<string, string> = {
 };
 
 function classifyTokens(html: string): string {
-  return html.replace(
-    /style="color: (#[0-9a-f]{6})"/gi,
-    (whole, hex) => {
-      const name = TOKENS[hex.toLowerCase()];
-      return name ? `class="tok-${name}"` : whole;
-    },
-  );
+  return html.replace(/style="color: (#[0-9a-f]{6})"/gi, (whole, hex) => {
+    const name = TOKENS[hex.toLowerCase()];
+    return name ? `class="tok-${name}"` : whole;
+  });
 }
 
 function extractBody(html: string): string {
@@ -285,23 +299,24 @@ const uniq = <T>(arr: T[]): T[] => [...new Set(arr)];
 
 // Templates emit <main> and the footer, so this contributes only <head> and the
 // site header.
-function shell({ title, siteName, nav: navItems, bodyHtml, headStyles = [], headTags = [], headScripts = [], scripts = [] }: ShellOptions): string {
+function shell({
+  title,
+  siteName,
+  nav: navItems,
+  bodyHtml,
+  headStyles = [],
+  headTags = [],
+  headScripts = [],
+  scripts = [],
+}: ShellOptions): string {
   const nav = navItems.map((n) => `<a href="${n.href}">${n.label}</a>`).join("");
-  const styleLinks = headStyles
-    .map((href) => `<link rel="stylesheet" href="${href}">`)
-    .join("\n");
-  // type="module" is deferred: runs after DOM parse, in order, head before
-  // body. Modules are isolated, so top-level const/let across toys don't clash.
+  const styleLinks = headStyles.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n");
   const headScriptTags = headScripts
     .map((src) => `<script type="module" src="${src}"></script>`)
     .join("\n");
-  const scriptTags = scripts
-    .map((s) => `<script type="module">\n${s}\n</script>`)
-    .join("\n");
+  const scriptTags = scripts.map((s) => `<script type="module">\n${s}\n</script>`).join("\n");
   const pageTitle = title ? `${title} · ${siteName}` : siteName;
-  const headExtras = [styleLinks, headTags.join("\n"), headScriptTags]
-    .filter(Boolean)
-    .join("\n");
+  const headExtras = [styleLinks, headTags.join("\n"), headScriptTags].filter(Boolean).join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -341,8 +356,11 @@ export function build(): void {
   if (existsSync(blogDir)) {
     const posts: Post[] = [];
     for (const file of findTyp(blogDir)) {
-      const slug = relative(blogDir, file).replace(/\.typ$/, "");
-      if (slug === "index") continue; // the listing page itself
+      // A post is a directory holding index.typ, so it can keep its own
+      // scripts and images; a bare .typ works too.
+      const rel = relative(blogDir, file).split(sep).join("/").replace(/\.typ$/, "");
+      if (rel === "index") continue; // the listing page itself
+      const slug = rel.replace(/\/index$/, "");
       const meta = pageData(file).meta;
       posts.push({
         page: "/" + relative(ROOT, file).split(sep).join("/"),
@@ -368,8 +386,14 @@ export function build(): void {
     // logic here.
     const scripts = data.scripts.map(transpile);
     const html = shell({
-      title: data.meta.title, siteName: site.name, nav: site.nav,
-      bodyHtml, headStyles, headTags, headScripts, scripts,
+      title: data.meta.title,
+      siteName: site.name,
+      nav: site.nav,
+      bodyHtml,
+      headStyles,
+      headTags,
+      headScripts,
+      scripts,
     });
 
     const outPath = join(DIST, rel);

@@ -1,6 +1,7 @@
 *
 
 !.gitignore
+!.editorconfig
 !LICENSE
 !README.md
 !package.json
