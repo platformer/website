@@ -29,7 +29,7 @@ Other features:
 - Layout primitives, since Typst's own `grid` and `stack` don't survive HTML
   export: `#grid-col` and `#grid-row` for extrinsic sizing, and
   `#flex` for intrinsic sizing
-- Typst elements for callouts, collapsibles, quotes, popovers and footnotes.
+- Typst elements for callouts, collapsibles, quotes, popovers and annotations.
 - JS/TS can be embedded in a Typst document and will be bundled as a module.
 
 There's a longer write-up of how it works at

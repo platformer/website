@@ -165,34 +165,86 @@
 
 /* #endregion */
 
-/* #region footnotes */
-.fn-ref {
-  font-size: 0.72em;
-  line-height: 0;
-  margin-left: 0.1em;
-}
-.fn-ref a { text-decoration: none; }
-.fn-ref a:hover { text-decoration: underline; }
+/* #region annotations */
+/* Markers and tabs are the same coloured square. */
+.ann-c1 { --ann: var(--c-blue); }
+.ann-c2 { --ann: var(--c-paprika); }
+.ann-c3 { --ann: var(--c-green); }
+.ann-c4 { --ann: #8a6d00; }
+.ann-c5 { --ann: #6b4fbb; }
+.ann-c6 { --ann: #14707c; }
 
-.footnotes {
+.ann-ref, .ann-tab, .ann-num {
+  display: inline-block;
+  border: 0;
+  margin: 0;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 1.5em;
+  padding: 0 0.3em;
+  border-radius: 3px;
+  background: var(--ann);
+  color: #fff;
+  font-size: 0.72em;
+  line-height: 1.6;
+  text-align: center;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.ann-ref { vertical-align: super; margin-left: 0.15em; }
+.ann-ref:hover, .ann-tab:hover, .ann-num:hover { text-decoration: none; filter: brightness(1.15); }
+.ann-panel :is(p):first-child { display: inline; }
+.ann-panel > :last-child { margin-bottom: 0; }
+.ann-ref { scroll-margin-top: var(--below-header); }
+.ann-panel { scroll-margin-top: calc(var(--below-header) + var(--ann-tabs-h, 2.5rem)); }
+
+/* Narrow: the notes collapse into tabs at the end of the section, one open at
+   a time. :target does the work, so clicking a marker or a tab expands the
+   right note and the back button steps through them. */
+.ann-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
   margin: 2rem 0 0;
   padding-top: 0.85rem;
   border-top: 1px solid var(--border);
+}
+.ann-tabs-label {
+  margin-right: 0.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ann-tab { font-size: 0.8rem; }
+.ann-panel {
+  margin: 0.75rem 0 0;
   font-size: 0.9rem;
   color: var(--muted);
 }
-.footnotes ol { list-style: none; margin: 0; padding: 0; }
-.footnotes li { margin: 0.4rem 0; }
-.footnotes li > :first-child { margin-top: 0; }
-.footnotes li > :last-child { margin-bottom: 0; }
-/* The number doubles as the link back to the reference. */
-.fn-back {
-  display: inline-block;
-  min-width: 1.2em;
-  font-size: 0.85em;
-  font-variant-numeric: tabular-nums;
+/* Scoped to the collapsed width so these never outrank the margin layout. */
+@media (max-width: 1449.98px) {
+  .ann-panel { display: none; }
+  .ann-panel:target { display: block; } /* until the script runs */
+  .annotations.js .ann-panel { display: none; }
+  .annotations.js .ann-panel[data-open] { display: block; }
 }
-:target.fn-ref, .footnotes li:target { background: var(--accent-soft); border-radius: 4px; }
+
+/* Wide: the notes move into the right margin, aligned with their markers by
+   lib/annotation.ts. This breakpoint is above the TOC's, so the notes are the
+   first thing to fold away as the window narrows. */
+@media (min-width: 1450px) {
+  .ann-tabs { display: none; }
+  .ann-panel {
+    display: block;
+    position: absolute;
+    left: 100%;
+    margin: 0 0 0 var(--gap);
+    width: var(--ann-w);
+  }
+  .ann-panel:target { background: var(--accent-soft); border-radius: 6px; }
+}
 
 /* #endregion */
 

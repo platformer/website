@@ -49,15 +49,15 @@ The core conceit of Typst is that it is both a simple markup language and an erg
     fibs.slice(0, n)
   }
 
-  #fib(20).map(x => str(x)).join(" ")
+  #fib(24).map(x => str(x)).join(" ")
   ```
 ][
-  #fib(20).map(x => str(x)).join(" ")
+  #fib(24).map(x => str(x)).join(" ")
 ]
 
 Typst's ergonomics are especially apparent if you have extensive experience writing Latex documents. If you've used Latex before, at some point it probably felt arcane or confusing. Often, if you had a specific use case, you'd find whatever package you needed, figure out its API, and move on. But how did that package actually work? What are the actual fundamentals of Latex programming that would allow you to write your own packages? I was usually too intimidated and time-constrained as a student to bother with finding the answer to those questions. But Typst felt different. It is so simple as to invite you to try writing your own packages.
 
-And I did! My first Typst project was a #link("https://gist.github.com/platformer/6b4504608969cfebff46ddcfbc18c537")[homework template]#footnote[There have been many Typst versions since I last used this, so it's likely severely outdated. Use at your own peril.] that I used for every class that would allow me, and I convinced all of two people to use it as well. My biggest contribution to the Typst community was a #link("https://typst.app/universe/package/algo")[package for displaying algorithms] that I also used quite extensively#footnote[I confess this package has been unmaintained for a while. If you actually need a Typst package for algorithms, I encourage you to research alternatives. I still intend to revisit this package whenever Typst implements first-class user-defined elements.].
+And I did! My first Typst project was a #link("https://gist.github.com/platformer/6b4504608969cfebff46ddcfbc18c537")[homework template]#annotation[There have been many Typst versions since I last used this, so it's likely severely outdated. Use at your own peril.] that I used for every class that would allow me, and I convinced all of two people to use it as well. My biggest contribution to the Typst community was a #link("https://typst.app/universe/package/algo")[package for displaying algorithms] that I also used quite extensively#annotation[I confess this package has been unmaintained for a while. If you actually need a Typst package for algorithms, I encourage you to research alternatives. I still intend to revisit this package whenever Typst implements first-class user-defined elements.].
 
 Seriously, if you've never tried Typst, I invite you to #link("https://typst.app/play")[play] around with it. But that's enough evangelizing. How does this website make use of it?
 
@@ -104,7 +104,7 @@ With this little trick, the SSG can collect `metadata` values and implement spec
 
 == Components
 
-I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules#footnote[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.].
+I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules#annotation[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.].
 
 === Callouts
 
@@ -160,9 +160,7 @@ show raw.where(lang: "inline-script"): it => [#metadata(it.text)<inline-script>]
 This lets me write some HTML and companion JavaScript right next to each other within a Typst document. For example, this:
 
 ````typ
-Clicks: #id("demo-count")[0]
-
-#button("demo-go")[Click me]
+#button("demo-go")[Click me] #id("demo-count")[0]
 
 ```inline-script
 const out = document.getElementById("demo-count") as HTMLElement;
@@ -175,9 +173,7 @@ document.getElementById("demo-go")!.addEventListener("click", () => {
 
 produces this:
 
-Clicks: #id("demo-count")[0]
-
-#button("demo-go")[Click me]
+#button("demo-go")[Click me] #id("demo-count")[0]
 
 ```inline-script
 const out = document.getElementById("demo-count") as HTMLElement;
@@ -200,7 +196,7 @@ raw(read("/lib/scrollspy.ts"), lang: "inline-script")
 ```typ
 #let blog(body) = {
   show: theme
-  elem("main", { toc(); body; _footnote-flush() }) // notice `toc` gets added to main here
+  elem("main", { toc(); body; _annotation-flush() }) // notice `toc` gets added to main here
   site-footer()
 }
 ```
@@ -211,7 +207,7 @@ Plus, the cute boat animation on my #page-link("/content/index.typ")[home page] 
 
 At the start of a build, there are two invocations of the Typst CLI:
 
-+ `typst eval` to retrieve blog post documents and populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#footnote[This likely won't be necessary whenever Typst adds a function for directory walking.]
++ `typst eval` to retrieve blog post documents and populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#annotation[This likely won't be necessary whenever Typst adds a function for directory walking.]
 + Another `typst eval` to verify that my internal links are all correct. I do some string transformation wherever necessary to make sure references to a `.typ` file correctly map to a URL.
 
 For each `.typ` file, there are two more invocations of the CLI:

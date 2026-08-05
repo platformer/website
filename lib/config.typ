@@ -3,7 +3,7 @@
 // Where a source file ends up on the site.
 //   /content/index.typ         -> /
 //   /content/blog/index.typ    -> /blog/
-//   /content/misc/counter.typ  -> /misc/counter.html
+//   /content/blog/a-post/index.typ -> /blog/a-post/
 #let page-url(path) = {
   let p = path
   if p.starts-with("/content/") { p = p.slice("/content".len()) }

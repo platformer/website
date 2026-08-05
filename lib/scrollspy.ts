@@ -1,10 +1,9 @@
-// Drives the #toc() highlight. Read at compile time by the toc element, so the
-// SSG needs no TOC awareness of its own.
+// Highlights the section being read in the #toc() sidebar. Read at compile
+// time by the toc element and shipped with it.
 //
-// Two refinements over "highlight the topmost visible heading": a click locks
-// the highlight until the next real scroll, and near the bottom the trailing
-// sections share out the remaining scroll, so short end sections still get a
-// turn and the last one wins at the very bottom.
+// A click locks the highlight until the next real scroll. Near the bottom the
+// trailing sections share out the remaining scroll, so short end sections still
+// get a turn and the last one wins at the very bottom.
 const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc a")];
 const heads = links.map((a) => document.getElementById((a.getAttribute("href") ?? "#").slice(1))!);
 // The line a heading must reach to count as current. Reading back the

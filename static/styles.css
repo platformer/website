@@ -16,8 +16,8 @@
   --muted:     #5c5c69;
   --border:    #e7e7ec;
 
-  --brand:     var(--c-blue);           /* primary, decorative */
-  --accent:    #1670c9;                 /* readable blue for text links */
+  --brand:     var(--c-blue); /* primary, decorative */
+  --accent:    #1670c9; /* readable blue for text links */
   --accent-soft: color-mix(in srgb, var(--c-blue) 12%, transparent);
 
   --tip:       var(--c-green);
@@ -40,12 +40,13 @@
      usual 16px default is 18px. Media queries resolve rem against that default
      rather than this, so the TOC breakpoint is in px. */
   --root-size: 112.5%;
-  --max: 46rem;           /* reading column */
-  --pad-x: 1.25rem;       /* gutter, shared by header, main and footer */
-  --pad-top: 3.5rem;      /* main's top padding; the TOC aligns to it */
+  --max: 46rem; /* reading column */
+  --pad-x: 1.25rem; /* gutter, shared by header, main and footer */
+  --pad-top: 3.5rem; /* main's top padding; the TOC aligns to it */
   --pad-bottom: 5rem;
-  --header-h: 3.5rem;     /* authoritative: the header is sized to this */
-  --toc-w: 11rem;         /* margin sidebar; feeds the TOC breakpoint */
+  --header-h: 3.5rem; /* authoritative: the header is sized to this */
+  --toc-w: 11rem; /* margin sidebar; feeds the TOC breakpoint */
+  --ann-w: 13rem; /* annotation column in the right margin */
   --gap: 1.25rem;
   --gap-sm: 0.85rem;
   --radius: 10px;
@@ -204,7 +205,7 @@ h1, h2, h3, h4 {
   letter-spacing: -0.015em;
 }
 h1 { font-size: 2.3rem; margin: 0 0 1rem; }
-h2 { font-size: 1.85rem; margin: 0 0 1.25rem; }   /* `=` in Typst */
+h2 { font-size: 1.85rem; margin: 0 0 1.25rem; } /* `=` in Typst */
 h3 { font-size: 1.35rem; margin: 2.5rem 0 0.6rem; } /* `==` in Typst */
 h4 { font-size: 1.1rem; margin: 2rem 0 0.5rem; }
 
@@ -273,14 +274,14 @@ button {
   font-size: 0.9rem;
   color: var(--fg);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--brand);
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.9rem;
   margin-right: 0.4rem;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
-button:hover { border-color: var(--brand); color: var(--accent); }
+button:hover { background: var(--accent-soft); color: var(--accent); }
 button:active { transform: translateY(1px); }
 
 /* #endregion */

@@ -120,10 +120,10 @@
 //   #flex(justify: "space-between", align: "center", basis: "20rem")[a][b]
 #let flex(
   ..cells,
-  justify: "center",   // justify-content
-  align: "stretch",    // align-items
+  justify: "center", // justify-content
+  align: "stretch", // align-items
   wrap: true,
-  basis: "18rem",      // width a cell wants before wrapping
+  basis: "18rem", // width a cell wants before wrapping
   gap: none,
 ) = {
   _uses-css
@@ -137,8 +137,8 @@
   elem("div", _cells(cells.pos()), class: "flex", style: vars.join("; "))
 }
 
-// Headings carry ids we assign rather than the ones Typst attaches to whatever
-// a show rule emits first, which the footnote block would otherwise claim.
+// Ids we assign: Typst gives a heading's anchor to whatever its show rule emits
+// first, which here is the annotation block.
 #let _heading-id(n) = "sec-" + str(n)
 
 #let _render-heading(it) = context {
@@ -147,22 +147,32 @@
   elem("h" + str(it.level + 1), it.body, id: _heading-id(n))
 }
 
-// Superscript reference, numbered across the document. The note itself is
-// collected by _footnote-flush at the end of the section it appears in.
-#let footnote(body) = {
-  [#metadata(body)<fn-note>]
+// Annotations: a numbered square in the text, and the note itself either in the
+// right margin (wide screens) or in a tabbed panel at the end of the section.
+// The marker links to the note and the note links back, so expanding one is
+// ordinary fragment navigation and browser history keeps working.
+#let _uses-annotation-js = script("/lib/annotation.ts")
+#let _ann-colors = 6
+#let _ann-class(n, base) = base + " ann-c" + str(calc.rem(n - 1, _ann-colors) + 1)
+
+#let annotation(body) = {
+  [#metadata(body)<ann-note>]
   context {
-    let n = query(selector(<fn-note>).before(here(), inclusive: true)).len()
+    let n = query(selector(<ann-note>).before(here(), inclusive: true)).len()
     _uses-css
-    elem("sup", elem("a", str(n), href: "#fn-" + str(n)),
-         id: "fn-ref-" + str(n), role: "doc-noteref", class: "fn-ref")
+    _uses-annotation-js
+    elem("a", str(n),
+      id: "ann-ref-" + str(n),
+      href: "#ann-" + str(n),
+      class: _ann-class(n, "ann-ref"),
+      role: "doc-noteref")
   }
 }
 
-// Renders the notes belonging to the section that ends here. Called from the
-// heading show rule, where the heading being shown already counts as "before"
-// this point, and once more at the end of the document.
-#let _footnote-flush(in-heading: false) = context {
+// Renders the notes belonging to the section ending here. `in-heading` is set
+// when called from the heading show rule, where the heading counts as "before"
+// this point.
+#let _annotation-flush(in-heading: false) = context {
   let me = here()
   let heads = query(selector(heading).before(me, inclusive: false))
   let prev = if in-heading {
@@ -170,22 +180,39 @@
   } else if heads.len() >= 1 { heads.last() } else { none }
 
   let lo = if prev == none { 0 } else {
-    query(selector(<fn-note>).before(prev.location())).len()
+    query(selector(<ann-note>).before(prev.location())).len()
   }
-  let hi = query(selector(<fn-note>).before(me)).len()
+  let hi = query(selector(<ann-note>).before(me)).len()
 
   if hi > lo {
     _uses-css
-    elem("section", elem("ol", {
-      for (i, note) in query(<fn-note>).slice(lo, hi).enumerate() {
+    let notes = query(<ann-note>).slice(lo, hi)
+    elem("section", {
+      // Only shown once the margin is too narrow to hold the notes.
+      elem("div", {
+        elem("span", "Notes", class: "ann-tabs-label")
+        for (i, note) in notes.enumerate() {
+          let n = lo + i + 1
+          elem("button", str(n),
+               type: "button",
+               class: _ann-class(n, "ann-tab"),
+               data-ann: "ann-" + str(n),
+               aria-controls: "ann-" + str(n),
+               aria-expanded: "false")
+        }
+      }, class: "ann-tabs")
+      for (i, note) in notes.enumerate() {
         let n = lo + i + 1
-        elem("li", {
-          elem("a", str(n), href: "#fn-ref-" + str(n), class: "fn-back")
+        elem("aside", {
+          elem("a", str(n),
+               href: "#ann-ref-" + str(n),
+               class: _ann-class(n, "ann-num"),
+               aria-label: "Back to reference " + str(n))
           [ ]
           note.value
-        }, id: "fn-" + str(n))
+        }, id: "ann-" + str(n), class: "ann-panel", role: "doc-footnote")
       }
-    }), role: "doc-endnotes", class: "footnotes")
+    }, class: "annotations", role: "doc-endnotes")
   }
 }
 

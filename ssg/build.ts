@@ -207,8 +207,8 @@ function transpile(code: string): string {
   return stripTypeScriptTypes(code);
 }
 
-// content/ mirrors its path (content/misc/x.ts -> /misc/x.js); anything else
-// lands under /scripts/.
+// content/ mirrors its path (content/blog/p/x.ts -> /blog/p/x.js); anything
+// else lands under /scripts/.
 function scriptOutput(srcAbs: string): { outRel: string; url: string } {
   let rel = relative(ROOT, srcAbs).split(sep).join("/");
   if (rel.startsWith("content/")) rel = rel.slice("content/".length);

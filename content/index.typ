@@ -15,13 +15,13 @@ const BOAT = [
   "   |   \\",
   "   |    \\",
   "   |_____\\",
-  "\\-----------/",  // hull, two rows of the same trapezoid, so the bottom of
-  " \\_________/",   // the bob only ever puts the lower row in the water
+  "\\-----------/",
+  " \\_________/",
 ];
 const WAVE = "~^~ ~~-~ ~^~~ -~~ ~-~^ ~~ ";
 const WIDTH = 46;
-const SEA = 2;                          // wave rows, at the bottom
-const HEIGHT = BOAT.length + SEA;       // hull's last row can reach the water
+const SEA = 2; // wave rows, at the bottom
+const HEIGHT = BOAT.length + SEA; // hull's last row can reach the water
 const BOAT_X = Math.floor((WIDTH - Math.max(...BOAT.map((l) => l.length))) / 2);
 
 // Waves travel right, so sample the pattern from a decreasing offset.
