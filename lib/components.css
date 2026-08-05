@@ -164,3 +164,72 @@
 .popover > :last-child  { margin-bottom: 0; }
 
 /* #endregion */
+
+/* #region footnotes */
+.fn-ref {
+  font-size: 0.72em;
+  line-height: 0;
+  margin-left: 0.1em;
+}
+.fn-ref a { text-decoration: none; }
+.fn-ref a:hover { text-decoration: underline; }
+
+.footnotes {
+  margin: 2rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.footnotes ol { list-style: none; margin: 0; padding: 0; }
+.footnotes li { margin: 0.4rem 0; }
+.footnotes li > :first-child { margin-top: 0; }
+.footnotes li > :last-child { margin-bottom: 0; }
+/* The number doubles as the link back to the reference. */
+.fn-back {
+  display: inline-block;
+  min-width: 1.2em;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+:target.fn-ref, .footnotes li:target { background: var(--accent-soft); border-radius: 4px; }
+
+/* #endregion */
+
+/* #region layout */
+.grid-col, .grid-row, .flex {
+  gap: var(--gap-own, var(--gap));
+  margin: 1.5rem 0;
+}
+
+.grid-col { display: grid; grid-template-columns: 1fr; }
+
+/* One column until there's room, so a narrow screen never scrolls sideways. */
+.grid-row { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 560px) {
+  .grid-row { grid-template-columns: var(--cols); }
+}
+
+/* Wrapping does the same job without a breakpoint: cells drop to the next line
+   once they no longer fit at --basis. */
+.flex {
+  display: flex;
+  flex-flow: row var(--wrap, wrap);
+  justify-content: var(--justify, center);
+  align-items: var(--align, stretch);
+}
+.flex > .cell { flex: 1 1 var(--basis, 18rem); }
+
+.cell {
+  /* Grid and flex items won't shrink below their content unless told to, which
+     is how a wide code block would push the page sideways. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cell > :first-child { margin-top: 0; }
+.cell > :last-child { margin-bottom: 0; }
+.cell :is(img, svg) { display: block; max-width: 100%; margin-inline: auto; }
+
+/* #endregion */

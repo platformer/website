@@ -26,7 +26,10 @@ Other features:
 
 - Typst documents can pick a template.
   The `blog` template provides a table of contents that builds itself from the Typst document's headings.
-- Typst elements for callouts, collapsibles, quotes and popovers.
+- Layout primitives, since Typst's own `grid` and `stack` don't survive HTML
+  export: `#grid-col` and `#grid-row` for extrinsic sizing, and
+  `#flex` for intrinsic sizing
+- Typst elements for callouts, collapsibles, quotes, popovers and footnotes.
 - JS/TS can be embedded in a Typst document and will be bundled as a module.
 
 There's a longer write-up of how it works at

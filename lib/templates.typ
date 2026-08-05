@@ -4,7 +4,9 @@
 // Component defaults and the inline-script channel, shared by every template.
 // A page can override any set rule locally.
 #let theme(body) = {
-  show raw.where(lang: "inline-script"): it => [#metadata(it.text) <inline-script>]
+  show raw.where(lang: "inline-script"): it => [#metadata(it.text)<inline-script>]
+  // Each heading closes the previous section, so its footnotes land there.
+  show heading: it => { _footnote-flush(in-heading: true); _render-heading(it) }
   show: e.set_(callout, kind: "note")
   show: e.set_(details, open: false)
   body
@@ -14,13 +16,13 @@
 
 #let base(body) = {
   show: theme
-  elem("main", body)
+  elem("main", { body; _footnote-flush() })
   site-footer()
 }
 
 // toc() renders nothing unless the post has enough sections.
 #let blog(body) = {
   show: theme
-  elem("main", { toc(); body })
+  elem("main", { toc(); body; _footnote-flush() })
   site-footer()
 }

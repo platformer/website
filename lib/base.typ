@@ -4,7 +4,7 @@
 #import "/lib/config.typ": *
 
 // Posts want title + date; summary is optional.
-#let meta(..args) = [#metadata(args.named()) <page-meta>]
+#let meta(..args) = [#metadata(args.named())<page-meta>]
 
 // html.elem with an optional id; everything below is built from it.
 #let elem(tag, body, id: none, ..attrs) = {
@@ -21,6 +21,6 @@
 #let page-link(path, body) = link(page-url(path), body)
 
 // Head channel; the SSG collects these into <head>, deduplicated.
-#let style(path) = [#metadata(path) <style-src>]                                // relative to the file, or /root-absolute
-#let head(tag, ..attrs) = [#metadata((tag: tag, attrs: attrs.named())) <head-tag>]  // fonts, meta, preload
-#let script(path) = [#metadata(path) <script-src>]                              // .ts/.js, as a deferred head module
+#let style(path) = [#metadata(path)<style-src>]                                // relative to the file, or /root-absolute
+#let head(tag, ..attrs) = [#metadata((tag: tag, attrs: attrs.named()))<head-tag>]  // fonts, meta, preload
+#let script(path) = [#metadata(path)<script-src>]                              // .ts/.js, as a deferred head module
