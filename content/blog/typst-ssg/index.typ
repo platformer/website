@@ -57,7 +57,7 @@ The core conceit of Typst is that it is both a simple markup language and an erg
 
 Typst's ergonomics are especially apparent if you have extensive experience writing Latex documents. If you've used Latex before, at some point it probably felt arcane or confusing. Often, if you had a specific use case, you'd find whatever package you needed, figure out its API, and move on. But how did that package actually work? What are the actual fundamentals of Latex programming that would allow you to write your own packages? I was usually too intimidated and time-constrained as a student to bother with finding the answer to those questions. But Typst felt different. It is so simple as to invite you to try writing your own packages.
 
-And I did! My first Typst project was a #link("https://gist.github.com/platformer/6b4504608969cfebff46ddcfbc18c537")[homework template]#annotation[There have been many Typst versions since I last used this, so it's likely severely outdated. Use at your own peril.] that I used for every class that would allow me, and I convinced all of two people to use it as well. My biggest contribution to the Typst community was a #link("https://typst.app/universe/package/algo")[package for displaying algorithms] that I also used quite extensively#annotation[I confess this package has been unmaintained for a while. If you actually need a Typst package for algorithms, I encourage you to research alternatives. I still intend to revisit this package whenever Typst implements first-class user-defined elements.].
+And I did! My first Typst project was a #link("https://gist.github.com/platformer/6b4504608969cfebff46ddcfbc18c537")[homework template]#annotation[There have been many Typst versions since I last used this, so it's likely severely outdated. Use at your own peril.] that I used for every class that would allow me, and I convinced all of two people to use it as well. My biggest contribution to the Typst community was a #link("https://typst.app/universe/package/algo")[package for displaying algorithms] that I also used quite extensively.#annotation[I confess this package has been unmaintained for a while. If you actually need a Typst package for algorithms, I encourage you to research alternatives. I still intend to revisit this package whenever Typst implements first-class user-defined elements.]
 
 Seriously, if you've never tried Typst, I invite you to #link("https://typst.app/play")[play] around with it. But that's enough evangelizing. How does this website make use of it?
 
@@ -104,7 +104,7 @@ With this little trick, the SSG can collect `metadata` values and implement spec
 
 = Components
 
-I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules#annotation[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.].
+I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules.#annotation[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.]
 
 == Callouts
 
@@ -148,6 +148,47 @@ Hover facts go in a #popover("pv-post", "popover")[This is just a native popover
 ```
 
 Hover facts go in a #popover("pv-post", "popover")[This is just a native popover].
+
+== Annotations
+
+I'm sure you've noticed them already!
+
+```typ
+Marco#annotation[Polo]
+```
+
+Marco#annotation[Polo]
+
+The implementation for these is a bit more involved. To collect all the annotations in a given section and display them at the end, I have to make use of some contextual information.
+
+```typ
+// called for every heading via a show rule, and once more at the end of the page
+#let _annotation-flush(in-heading: false) = context {
+  let me = here()
+
+  // get the previous heading
+  let heads = query(selector(heading).before(me, inclusive: false))
+  let prev = if in-heading {
+    if heads.len() >= 2 { heads.at(-2) } else { none }
+  } else if heads.len() >= 1 { heads.last() } else { none }
+
+  // get the number of annotations before the current section
+  let lo = if prev == none { 0 } else {
+    query(selector(<ann-note>).before(prev.location())).len()
+  }
+
+  // get number of annotations before end of section
+  let hi = query(selector(<ann-note>).before(me)).len()
+
+  if hi > lo {
+    _uses-css
+    // get annotations in current section
+    let notes = query(<ann-note>).slice(lo, hi)
+
+    // ... render annotations ...
+  }
+}
+```
 
 = Scripts
 
@@ -196,7 +237,7 @@ raw(read("/lib/scrollspy.ts"), lang: "inline-script")
 ```typ
 #let blog(body) = {
   show: theme
-  elem("main", { toc(); body; _annotation-flush() }) // notice `toc` gets added to main here
+  elem("main", { toc(); body; _annotation-flush() }, id: "content") // notice `toc` gets added to main here
   site-footer()
 }
 ```
@@ -205,15 +246,17 @@ Plus, the cute boat animation on my #page-link("/content/index.typ")[home page] 
 
 = What the generator does
 
-At the start of a build, there are two invocations of the Typst CLI:
+A build starts with two invocations of the Typst CLI:
 
-+ `typst eval` to retrieve blog post documents and populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#annotation[This likely won't be necessary whenever Typst adds a function for directory walking.]
++ `typst eval` to read my site config, which holds things like the site name and the nav links.
 + Another `typst eval` to verify that my internal links are all correct. I do some string transformation wherever necessary to make sure references to a `.typ` file correctly map to a URL.
 
-For each `.typ` file, there are two more invocations of the CLI:
+Then one `typst eval` per blog post to populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#annotation[This likely won't be necessary whenever Typst adds a function for directory walking.]
+
+Every `.typ` file then needs:
 
 + `typst compile --format html` to get HTML output.
-+ `typst eval` to retrieve metadata tags.
++ `typst eval` to retrieve metadata tags, though blog posts already had this done in the previous step.
 
 Then the SSG takes the `<body>` out of the HTML output, resolves/copies any scripts and stylesheets, tacks on the `<head>`, and writes the rendered file.
 
