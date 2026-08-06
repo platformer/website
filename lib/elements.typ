@@ -137,6 +137,16 @@
   elem("div", _cells(cells.pos()), class: "flex", style: vars.join("; "))
 }
 
+// The page's <h1>. Defaults to the title given to #meta so the two can't drift;
+// pass content to show something else.
+//   #title()            #title[Hello!]
+#let title(..args) = context {
+  let given = args.pos().at(0, default: none)
+  std.title(if given != none { given } else {
+    query(<page-meta>).at(0, default: (value: (:))).value.at("title", default: "")
+  })
+}
+
 // Ids we assign: Typst gives a heading's anchor to whatever its show rule emits
 // first, which here is the annotation block.
 #let _heading-id(n) = "sec-" + str(n)
@@ -165,7 +175,8 @@
       id: "ann-ref-" + str(n),
       href: "#ann-" + str(n),
       class: _ann-class(n, "ann-ref"),
-      role: "doc-noteref")
+      role: "doc-noteref",
+      aria-label: "Note " + str(n))
   }
 }
 
@@ -194,20 +205,21 @@
         for (i, note) in notes.enumerate() {
           let n = lo + i + 1
           elem("button", str(n),
-               type: "button",
-               class: _ann-class(n, "ann-tab"),
-               data-ann: "ann-" + str(n),
-               aria-controls: "ann-" + str(n),
-               aria-expanded: "false")
+            type: "button",
+            class: _ann-class(n, "ann-tab"),
+            data-ann: "ann-" + str(n),
+            aria-controls: "ann-" + str(n),
+            aria-expanded: "false",
+            aria-label: "Note " + str(n))
         }
       }, class: "ann-tabs")
       for (i, note) in notes.enumerate() {
         let n = lo + i + 1
         elem("aside", {
           elem("a", str(n),
-               href: "#ann-ref-" + str(n),
-               class: _ann-class(n, "ann-num"),
-               aria-label: "Back to reference " + str(n))
+            href: "#ann-ref-" + str(n),
+            class: _ann-class(n, "ann-num"),
+            aria-label: "Back to reference " + str(n))
           [ ]
           note.value
         }, id: "ann-" + str(n), class: "ann-panel", role: "doc-footnote")
@@ -217,13 +229,18 @@
 }
 
 // Shared by the blog index and the home page. `posts` comes from posts.json.
-#let post-list(posts, limit: none) = {
+#let post-list(posts, limit: none) = context {
+  // A post title sits one level below whatever section encloses the list, so
+  // the list nests correctly wherever it is placed.
+  let prev = query(selector(heading).before(here()))
+  let level = if prev.len() == 0 { 2 } else { prev.last().level + 2 }
   let shown = if limit == none { posts } else { posts.slice(0, calc.min(limit, posts.len())) }
   elem("ul", class: "posts", {
     for post in shown {
       elem("li", class: "post", {
-        elem("h3", elem("a", post.title, class: "post-link", href: page-url(post.page)),
-             class: "post-title")
+        elem("h" + str(level),
+          elem("a", post.title, class: "post-link", href: page-url(post.page)),
+          class: "post-title")
         elem("div", post.date, class: "post-meta")
         if post.summary != "" { elem("p", post.summary, class: "post-summary") }
       })
@@ -246,18 +263,18 @@
 // into the left margin where there's room for it.
 #let toc() = context {
   let all = query(heading)
-  let heads = all.enumerate().filter(((i, h)) => h.level >= 2)
+  let heads = all.enumerate().filter(((i, h)) => h.level >= 1)
   if heads.len() >= 2 {
     _uses-css
     elem("div", elem("nav", {
-      elem("p", "On this page", class: "toc-title")
+      elem("p", "On this page", class: "toc-title", id: "toc-title")
       elem("ul", {
         for (i, h) in heads {
           elem("li", elem("a", h.body, href: "#" + _heading-id(i + 1)),
-               class: "toc-l" + str(h.level))
+            class: "toc-l" + str(h.level))
         }
       })
-    }, class: "toc"), class: "toc-col")
+    }, class: "toc", aria-labelledby: "toc-title"), class: "toc-col")
     // Highlight behaviour, shipped with the element.
     raw(read("/lib/scrollspy.ts"), lang: "inline-script")
   }

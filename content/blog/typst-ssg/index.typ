@@ -7,11 +7,11 @@
   summary: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
 )
 
-= How this site is built
+#title()
 
 This site is primarily written in #link("https://typst.app")[Typst], a markup language that can be used as an alternative to Latex, Markdown, or AsciiDoc. I've been meaning to make my own static site generator based on Typst for a very long time, essentially ever since the Typst developers started teasing HTML export. Now HTML export is available (in an experimental capacity), and I've finally found the time and motivation to get my own domain and build everything out.
 
-== Why Typst?
+= Why Typst?
 
 If you've never heard of Typst before, my incoming praise for it will likely sound evangelical, but simply put, it's the most delightful markup language I've ever used.
 
@@ -61,7 +61,7 @@ And I did! My first Typst project was a #link("https://gist.github.com/platforme
 
 Seriously, if you've never tried Typst, I invite you to #link("https://typst.app/play")[play] around with it. But that's enough evangelizing. How does this website make use of it?
 
-== HTML export
+= HTML export
 
 Typst 0.13 added HTML as an export target. Currently, Typst's main goal with HTML export is converting Typst content to semantic HTML, so a `=` heading becomes an `<h2>`, `*bold*` becomes `<strong>`, and a fenced code block becomes `<pre><code>` with syntax highlighting already applied. However, it does not translate Typst's layout and styling primitives:
 
@@ -79,7 +79,7 @@ So Typst files own the raw content and any HTML elements you explicitly create, 
   There is a small escape hatch. `html.frame` renders Typst content to inline SVG and preserves arbitrary styling, but of course you lose out on selectable text and accessibility. It's really only intended for diagrams or figures.
 ]
 
-== The metadata channel
+= The metadata channel
 
 A lot of my setup relies on Typst's metadata mechanism. A Typst document can use the `metadata` function to emit arbitrary data that the compiler can later query by its label:
 
@@ -102,11 +102,11 @@ With this little trick, the SSG can collect `metadata` values and implement spec
 #let head(tag, ..attrs) = [#metadata((tag: tag, attrs: attrs.named()))<head-tag>]
 ```
 
-== Components
+= Components
 
 I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules#annotation[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.].
 
-=== Callouts
+== Callouts
 
 ```typ
 #note[A plain note for context.]
@@ -117,7 +117,7 @@ I've defined some common components using the #link("https://typst.app/universe/
 
 #warn(title: "Careful")[This one has a title.]
 
-=== Collapsibles
+== Collapsibles
 
 ```typ
 #details("Implementation detail")[
@@ -129,7 +129,7 @@ I've defined some common components using the #link("https://typst.app/universe/
   Uses the native `<details>` element, so it needs no JavaScript.
 ]
 
-=== Quotes
+== Quotes
 
 ```typ
 #blockquote(by: [Ada Lovelace])[
@@ -141,7 +141,7 @@ I've defined some common components using the #link("https://typst.app/universe/
   The Analytical Engine weaves algebraic patterns.
 ]
 
-=== Popovers
+== Popovers
 
 ```typ
 Hover facts go in a #popover("pv-post", "popover")[This is just a native popover].
@@ -149,7 +149,7 @@ Hover facts go in a #popover("pv-post", "popover")[This is just a native popover
 
 Hover facts go in a #popover("pv-post", "popover")[This is just a native popover].
 
-== Scripts
+= Scripts
 
 A show rule in the template catches raw blocks tagged `inline-script` and passes them to the generator instead of rendering them:
 
@@ -203,7 +203,7 @@ raw(read("/lib/scrollspy.ts"), lang: "inline-script")
 
 Plus, the cute boat animation on my #page-link("/content/index.typ")[home page] was also implemented via this method.
 
-== What the generator does
+= What the generator does
 
 At the start of a build, there are two invocations of the Typst CLI:
 
@@ -219,7 +219,7 @@ Then the SSG takes the `<body>` out of the HTML output, resolves/copies any scri
 
 That's really the crux of it. There are other minor details, like deduplicating stylesheet references as necessary, and overwriting Typst's default styling for syntax tokens in code blocks, but the overall process is straightforward. The whole build script is about 400 lines, so I'm reasonably impressed with how small it ended up being.
 
-== Worth it?
+= Worth it?
 
 I think making a custom SSG is a worthwhile endeavor for any personal site. It's just nice to be in complete control of a tool I know I'll use every day, and I'm happy that I can do just that for my own website.
 

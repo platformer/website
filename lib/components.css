@@ -1,14 +1,20 @@
-/* Component styles, loaded only where a component is used. Tokens come from
-   static/styles.css. */
+/*
+  Component styles, loaded only where a component is used. Tokens come from
+  static/styles.css.
+*/
 
 /* #region toc */
-/* Floats into the left margin, anchored to the centred <main>. Hidden when
-   there's no room for it. */
+/*
+  Floats into the left margin, anchored to the centred <main>. Hidden when
+  there's no room for it.
+*/
 .toc-col { display: none; }
-/* The margin has to hold the TOC on both sides of the centered column, so the
-   breakpoint is --max + 2*(--toc-w + --gap). Media queries can't read custom
-   properties and resolve rem at 16px (not html's 18px), so it's spelled out in
-   px: (46 + 2*(11 + 1.25)) * 18px = 1269px, rounded up for slack. */
+/*
+  The margin has to hold the TOC on both sides of the centered column, so the
+  breakpoint is --max + 2*(--toc-w + --gap). Media queries can't read custom
+  properties and resolve rem at 16px (not html's 18px), so it's spelled out in
+  px: (46 + 2*(11 + 1.25)) * 18px = 1269px, rounded up for slack.
+*/
 @media (min-width: 1300px) {
   .toc-col {
     display: block;
@@ -48,13 +54,15 @@
 }
 .toc a:hover { color: var(--fg); }
 .toc a.active { color: var(--accent); border-left-color: var(--brand); }
-.toc-l3 a { padding-left: calc(var(--toc-indent) * 2); font-size: 0.95em; }
+.toc-l2 a { padding-left: calc(var(--toc-indent) * 2); font-size: 0.95em; }
 
-/* Align the letters rather than the line boxes, whose leading differs with
-   font size. */
+/*
+  Align the letters rather than the line boxes, whose leading differs with
+  font size.
+*/
 @supports (text-box-trim: trim-start) {
   .toc-title,
-  main > h2:first-of-type {
+  main > h1:first-of-type {
     text-box-trim: trim-start;
     text-box-edge: cap alphabetic;
   }
@@ -138,8 +146,10 @@
   color: var(--accent);
   cursor: pointer;
 }
-/* Must stay scoped to the open state: author styles beat the UA sheet whatever
-   the specificity, so an unscoped display leaves the panel permanently on. */
+/*
+  Must stay scoped to the open state: author styles beat the UA sheet whatever
+  the specificity, so an unscoped display leaves the panel permanently on.
+*/
 .popover:popover-open { display: block; }
 .popover {
   max-width: 22rem;
@@ -150,8 +160,10 @@
   color: var(--fg);
   box-shadow: 0 12px 34px rgba(2, 2, 11, 0.28);
 }
-/* Anchor positioning is Chromium-only for now; elsewhere the popover falls
-   back to the UA default, centred. */
+/*
+  Anchor positioning is Chromium-only for now; elsewhere the popover falls
+  back to the UA default, centred.
+*/
 @supports (position-area: bottom) {
   .popover {
     position-area: bottom span-right;
@@ -198,9 +210,11 @@
 .ann-ref { scroll-margin-top: var(--below-header); }
 .ann-panel { scroll-margin-top: calc(var(--below-header) + var(--ann-tabs-h, 2.5rem)); }
 
-/* Narrow: the notes collapse into tabs at the end of the section, one open at
-   a time. :target does the work, so clicking a marker or a tab expands the
-   right note and the back button steps through them. */
+/*
+  Narrow: the notes collapse into tabs at the end of the section, one open at
+  a time. :target does the work, so clicking a marker or a tab expands the
+  right note and the back button steps through them.
+*/
 .ann-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -231,9 +245,11 @@
   .annotations.js .ann-panel[data-open] { display: block; }
 }
 
-/* Wide: the notes move into the right margin, aligned with their markers by
-   lib/annotation.ts. This breakpoint is above the TOC's, so the notes are the
-   first thing to fold away as the window narrows. */
+/*
+  Wide: the notes move into the right margin, aligned with their markers by
+  lib/annotation.ts. This breakpoint is above the TOC's, so the notes are the
+  first thing to fold away as the window narrows.
+*/
 @media (min-width: 1450px) {
   .ann-tabs { display: none; }
   .ann-panel {
@@ -262,8 +278,10 @@
   .grid-row { grid-template-columns: var(--cols); }
 }
 
-/* Wrapping does the same job without a breakpoint: cells drop to the next line
-   once they no longer fit at --basis. */
+/*
+  Wrapping does the same job without a breakpoint: cells drop to the next line
+  once they no longer fit at --basis.
+*/
 .flex {
   display: flex;
   flex-flow: row var(--wrap, wrap);
@@ -273,8 +291,10 @@
 .flex > .cell { flex: 1 1 var(--basis, 18rem); }
 
 .cell {
-  /* Grid and flex items won't shrink below their content unless told to, which
-     is how a wide code block would push the page sideways. */
+  /*
+    Grid and flex items won't shrink below their content unless told to, which
+    is how a wide code block would push the page sideways.
+  */
   min-width: 0;
   display: flex;
   flex-direction: column;

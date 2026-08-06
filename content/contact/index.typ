@@ -2,7 +2,7 @@
 #show: base
 #meta(title: "Contact")
 
-= Contact
+#title()
 
 Happy to hear from you, whether it's about something I've written, a project
 you're working on, or just to say hello.

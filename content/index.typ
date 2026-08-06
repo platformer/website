@@ -58,11 +58,11 @@ if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
 }
 ```
 
-= Hello!
+#title[Hello!]
 
 I build things and occasionally write about them. Maybe you'll find something interesting!
 
-== Recent posts
+= Recent posts
 
 #let posts = json("blog/posts.json")
 

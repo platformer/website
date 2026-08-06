@@ -327,10 +327,11 @@ function shell({
 ${headExtras}
 </head>
 <body>
+<a class="skip-link" href="#content">Skip to content</a>
 <header class="site-header">
 <div class="site-header-inner">
 <a class="brand" href="/">${siteName}</a>
-<nav>${nav}</nav>
+<nav aria-label="Site">${nav}</nav>
 </div>
 </header>
 ${bodyHtml}

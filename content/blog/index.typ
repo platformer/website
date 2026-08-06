@@ -2,7 +2,7 @@
 #show: base
 #meta(title: "Blog")
 
-= Blog
+#title()
 
 // Written by the SSG before any page compiles.
 #let posts = json("posts.json")

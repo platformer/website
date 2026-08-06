@@ -16,13 +16,13 @@
 
 #let base(body) = {
   show: theme
-  elem("main", { body; _annotation-flush() })
+  elem("main", { body; _annotation-flush() }, id: "content")
   site-footer()
 }
 
 // toc() renders nothing unless the post has enough sections.
 #let blog(body) = {
   show: theme
-  elem("main", { toc(); body; _annotation-flush() })
+  elem("main", { toc(); body; _annotation-flush() }, id: "content")
   site-footer()
 }
