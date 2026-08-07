@@ -232,6 +232,10 @@
   letter-spacing: 0.06em;
 }
 .ann-tab { font-size: 0.8rem; }
+/* Restated because the generic button:hover outranks .ann-tab and would recolour it. */
+.ann-tab:hover { background: var(--ann); color: #fff; }
+/* The open tab wears a halo, so closing one is visible while the pointer rests on it. */
+.ann-tab[aria-expanded="true"] { box-shadow: 0 0 0 1px var(--bg), 0 0 0 2px var(--ann); }
 .ann-panel {
   margin: 0.75rem 0 0;
   font-size: 0.9rem;

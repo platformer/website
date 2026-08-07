@@ -2,12 +2,12 @@
 #show: blog
 
 #meta(
-  title: "How this site is built",
+  title: "Draft: How this site is built",
   date: "2026-08-06",
   summary: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
 )
 
-#title[Draft: How this site is build]
+#title()
 
 This site is primarily written in #link("https://typst.app")[Typst], a markup language that can be used as an alternative to Latex, Markdown, or AsciiDoc. I've been meaning to make my own static site generator based on Typst for a very long time, essentially ever since the Typst developers started teasing HTML export. Now HTML export is available (in an experimental capacity), and I've finally found the time and motivation to get my own domain and build everything out.
 
