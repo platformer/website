@@ -24,13 +24,12 @@ That allows the Typst code to reference any scripts or stylesheets the page need
 
 Other features:
 
-- Typst documents can pick a template.
-  The `blog` template provides a table of contents that builds itself from the Typst document's headings.
+- Typst documents can pick a template; the `blog` template provides a table of contents that builds itself from the Typst document's headings
 - Layout primitives, since Typst's own `grid` and `stack` don't survive HTML
   export: `#grid-col` and `#grid-row` for extrinsic sizing, and
   `#flex` for intrinsic sizing
-- Typst elements for callouts, collapsibles, quotes, popovers and annotations.
-- JS/TS can be embedded in a Typst document and will be bundled as a module.
+- Typst elements for callouts, collapsibles, quotes, popovers, and annotations
+- JS/TS can be embedded in a Typst document and will be bundled as a module
 
 There's a longer write-up of how it works at
 [andrewsen.dev/blog/typst-ssg](https://andrewsen.dev/blog/typst-ssg/).
