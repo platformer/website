@@ -81,20 +81,32 @@ So Typst files own the raw content and any HTML elements you explicitly create, 
 
 = The metadata channel
 
-A lot of my setup relies on Typst's metadata mechanism. A Typst document can use the `metadata` function to emit arbitrary data that the compiler can later query by its label:
+A lot of my setup relies on Typst's metadata mechanism. A Typst document can use the `metadata` function to emit arbitrary data that the compiler can later query by its label.
 
 ```typ
-// I define a helper function where the `metadata` is always labeled `<page-meta>`
+// helper function to tag passed info with `<page-meta>`
 #let meta(..args) = [#metadata(args.named())<page-meta>]
 ```
 
-and the site generator queries the `<page-meta>` label:
+I called the `meta` helper at the top of this document:
+
+```typ
+#meta(
+  title: "Draft: How this site is built",
+  date: "2026-08-06",
+  desc: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
+)
+```
+
+And the site generator queries the `<page-meta>` label:
 
 ```
 typst eval --target html --in page.typ 'query(<page-meta>).map(it => it.value)'
 ```
 
-With this little trick, the SSG can collect `metadata` values and implement special handling for frontmatter, embedded scripts, stylesheets, and any other magical patterns I choose to implement:
+It uses the collected info to populate this page's `<head>`, as well as the blurb you see for each post listed on the main #page-link("/content/blog/index.typ")[Blog page].
+
+With this little trick, the SSG can add special handling for frontmatter, embedded scripts, stylesheets, and any other magical patterns I choose to implement:
 
 ```typ
 #let style(path)        = [#metadata(path)<style-src>]
