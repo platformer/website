@@ -242,7 +242,7 @@
           elem("a", post.title, class: "post-link", href: page-url(post.page)),
           class: "post-title")
         elem("div", post.date, class: "post-meta")
-        if post.summary != "" { elem("p", post.summary, class: "post-summary") }
+        if post.desc != "" { elem("p", post.desc, class: "post-desc") }
       })
     }
   })

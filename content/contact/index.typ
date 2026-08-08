@@ -1,6 +1,9 @@
 #import "/lib/site.typ": *
 #show: base
-#meta(title: "Contact")
+#meta(
+  title: "Contact",
+  desc: "How to reach me.",
+)
 
 #title()
 

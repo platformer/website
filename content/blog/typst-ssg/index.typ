@@ -4,7 +4,7 @@
 #meta(
   title: "Draft: How this site is built",
   date: "2026-08-06",
-  summary: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
+  desc: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
 )
 
 #title()

@@ -1,6 +1,9 @@
 #import "/lib/site.typ": *
 #show: base
-#meta(title: "Home")
+#meta(
+  title: "Home",
+  desc: "I build things and occasionally write about them. Recent posts and whatever else I'm working on.",
+)
 
 #elem("pre", [], id: "boat", class: "boat", aria-hidden: "true")
 

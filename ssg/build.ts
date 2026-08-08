@@ -36,7 +36,7 @@ export const GENERATED: string[] = [BLOG_POSTS];
 interface PageMeta {
   title?: string;
   date?: string;
-  summary?: string;
+  desc?: string;
   [key: string]: unknown;
 }
 interface HeadTag {
@@ -47,7 +47,7 @@ interface Post {
   page: string; // source path; blog/index.typ turns it into a URL via page-url
   title: string;
   date: string;
-  summary: string;
+  desc: string;
 }
 interface NavEntry {
   label: string;
@@ -67,6 +67,7 @@ interface PageData {
 }
 interface ShellOptions {
   title?: string;
+  desc?: string;
   siteName: string;
   nav: NavEntry[];
   bodyHtml: string;
@@ -248,9 +249,12 @@ function emitStyle(srcAbs: string): string {
 }
 
 const VOID_TAGS = new Set(["link", "meta", "base", "br", "hr", "img", "input"]);
+const esc = (s: string): string =>
+  s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+
 function renderHeadTag({ tag, attrs }: HeadTag): string {
   const a = Object.entries(attrs || {})
-    .map(([k, v]) => ` ${k}="${String(v).replaceAll('"', "&quot;")}"`)
+    .map(([k, v]) => ` ${k}="${esc(String(v))}"`)
     .join("");
   return VOID_TAGS.has(tag) ? `<${tag}${a}>` : `<${tag}${a}></${tag}>`;
 }
@@ -301,6 +305,7 @@ const uniq = <T>(arr: T[]): T[] => [...new Set(arr)];
 // site header.
 function shell({
   title,
+  desc,
   siteName,
   nav: navItems,
   bodyHtml,
@@ -316,13 +321,14 @@ function shell({
     .join("\n");
   const scriptTags = scripts.map((s) => `<script type="module">\n${s}\n</script>`).join("\n");
   const pageTitle = title ? `${title} · ${siteName}` : siteName;
+  const description = desc ? `\n<meta name="description" content="${esc(desc)}">` : "";
   const headExtras = [styleLinks, headTags.join("\n"), headScriptTags].filter(Boolean).join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${pageTitle}</title>
+<title>${esc(pageTitle)}</title>${description}
 <link rel="stylesheet" href="/styles.css">
 ${headExtras}
 </head>
@@ -367,7 +373,7 @@ export function build(): void {
         page: "/" + relative(ROOT, file).split(sep).join("/"),
         title: meta.title ?? slug,
         date: meta.date ?? "",
-        summary: meta.summary ?? "",
+        desc: meta.desc ?? "",
       });
     }
     posts.sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -388,6 +394,7 @@ export function build(): void {
     const scripts = data.scripts.map(transpile);
     const html = shell({
       title: data.meta.title,
+      desc: data.meta.desc,
       siteName: site.name,
       nav: site.nav,
       bodyHtml,

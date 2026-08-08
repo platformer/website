@@ -3,7 +3,7 @@
 
 #import "/lib/config.typ": *
 
-// Posts want title + date; summary is optional.
+// Posts want title + date; desc is optional, and also fills <meta name=description>.
 #let meta(..args) = [#metadata(args.named())<page-meta>]
 
 // html.elem with an optional id; everything below is built from it.

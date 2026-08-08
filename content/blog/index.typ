@@ -1,6 +1,9 @@
 #import "/lib/site.typ": *
 #show: base
-#meta(title: "Blog")
+#meta(
+  title: "Blog",
+  desc: "My posts. Mostly about programming, projects, and any related curiosities.",
+)
 
 #title()
 

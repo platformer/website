@@ -236,8 +236,18 @@ h4 { font-size: 1rem; margin: 1.75rem 0 0.4rem; }
 p, ul, ol { margin: 0 0 1.15rem; }
 li { margin: 0.2rem 0; }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: 2px; }
+/*
+  Underlined by default: colour alone isn't enough to mark a link. Site chrome
+  (nav, TOC, brand, annotation squares) opts out with its own text-decoration.
+*/
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover { text-decoration-color: var(--accent); }
 
 strong { font-weight: 650; }
 hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
@@ -363,7 +373,7 @@ button:active { transform: translateY(1px); }
   font-weight: 650;
   color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
 }
@@ -374,7 +384,7 @@ button:active { transform: translateY(1px); }
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
-.post-summary { margin: 0.5rem 0 0; color: var(--muted); }
+.post-desc { margin: 0.5rem 0 0; color: var(--muted); }
 .more-posts { margin: 1.25rem 0 0; font-size: 0.95rem; }
 
 /* Heading anchors clear the sticky header when jumped to. */
