@@ -2,7 +2,7 @@
 // browser on change (`npm run dev`).
 //
 // Polls rather than using fs.watch: inotify doesn't fire on this repo's WSL2
-// /mnt/c mount. A change re-runs the whole build.
+// /mnt/c mount. A change re-runs the whole build, one poll after the last edit.
 
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -141,10 +141,17 @@ server.listen(PORT, async () => {
   console.log(`\n  http://localhost:${PORT}   (watching sources, live reload on)\n`);
 
   // Self-scheduling so polls never overlap.
+  // A checkout rewrites many files at once, so build only once the tree has
+  // stopped moving. Building mid-write fails against a half-written file, and
+  // build() empties dist/ before it can refill it.
   let prev = await snapshot();
+  let settling = false;
   const tick = async (): Promise<void> => {
     const next = await snapshot();
     if (changed(prev, next)) {
+      settling = true;
+    } else if (settling) {
+      settling = false;
       console.log("change detected, rebuilding...");
       if (safeBuild()) broadcastReload();
     }
