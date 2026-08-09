@@ -68,7 +68,13 @@ for (const ref of document.querySelectorAll<HTMLAnchorElement>(".ann-ref")) {
   ref.addEventListener("click", () => open((ref.getAttribute("href") ?? "").slice(1)));
 }
 
-addEventListener("hashchange", () => open(location.hash.slice(1)));
+// Only a note anchor drives the panels. Collapsing one for an unrelated jump,
+// like a TOC link, would pull height out from under a scroll already aimed at
+// the old offset and overshoot the heading.
+addEventListener("hashchange", () => {
+  const target = document.getElementById(location.hash.slice(1));
+  if (target?.classList.contains("ann-panel")) open(target.id);
+});
 
 // Arriving on a link to a note: the browser has already tried to scroll to a
 // panel that was still hidden, so place it again once it is open.
