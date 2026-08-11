@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- The home page's ASCII boat, traced: sail triangle over the hull trapezoid. -->
+  <style>
+    g { stroke: #0076d1 }
+    @media (prefers-color-scheme: dark) { g { stroke: #77aed6 } }
+  </style>
+  <g fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M4.8 1 L11.8 11.5 L4.8 11.5 Z"/>
+    <path d="M1 11.5 L15 11.5 L12.9 15 L3.1 15 Z"/>
+  </g>
+</svg>
