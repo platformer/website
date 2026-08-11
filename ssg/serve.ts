@@ -140,10 +140,9 @@ server.listen(PORT, async () => {
   safeBuild(); // synchronous, so nothing is served half-built
   console.log(`\n  http://localhost:${PORT}   (watching sources, live reload on)\n`);
 
-  // Self-scheduling so polls never overlap.
-  // A checkout rewrites many files at once, so build only once the tree has
-  // stopped moving. Building mid-write fails against a half-written file, and
-  // build() empties dist/ before it can refill it.
+  // Self-scheduling so polls never overlap. Builds only once the tree stops
+  // moving: a checkout rewrites many files at once, and building mid-write
+  // fails after build() has already emptied dist/.
   let prev = await snapshot();
   let settling = false;
   const tick = async (): Promise<void> => {

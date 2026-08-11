@@ -87,7 +87,7 @@
 )
 
 // Layout primitives, since Typst's own grid and stack are dropped by HTML
-// export. Each argument is one cell; cells centre their content vertically and
+// export. Each argument is one cell; cells center their content vertically and
 // never force the page wider than it is.
 
 #let _cells(items) = { for c in items { elem("div", c, class: "cell") } }
@@ -275,7 +275,7 @@
         }
       })
     }, class: "toc", aria-labelledby: "toc-title"), class: "toc-col")
-    // Highlight behaviour, shipped with the element.
+    // Highlight behavior, shipped with the element.
     raw(read("/lib/scrollspy.ts"), lang: "inline-script")
   }
 }

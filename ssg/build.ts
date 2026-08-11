@@ -275,7 +275,7 @@ function findTyp(dir: string): string[] {
 }
 
 // Typst bakes its light-mode palette into each token as an inline style, which
-// CSS can't restyle. Swap the known colours for classes; anything unmapped keeps
+// CSS can't restyle. Swap the known colors for classes; anything unmapped keeps
 // Typst's own.
 const TOKENS: Record<string, string> = {
   "#d73948": "kw",

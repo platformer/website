@@ -33,10 +33,7 @@
   --tok-esc:   #14606a;
 }
 
-/*
-  metrics: values other rules derive from, including components.css and the
-  scroll-spy, so change them here
-*/
+/* metrics: components.css and the scroll-spy derive from these */
 :root {
   /*
     Relative so it still scales with the reader's own font size; 112.5% of the
@@ -55,7 +52,6 @@
   --gap-sm: 0.85rem;
   --radius: 10px;
   --radius-sm: 6px;
-  /* Clearance below the sticky header for anchor jumps and sticky sidebars. */
   --below-header: calc(var(--header-h) + var(--gap));
 }
 
@@ -102,12 +98,7 @@ html {
   font-size: var(--root-size);
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  /*
-    Reserve the scrollbar's width even on pages short enough not to need one.
-    Otherwise the centred column, header included, shifts by half a scrollbar
-    between a long page and a short one. No effect where scrollbars overlay.
-  */
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
 }
 
 body {
@@ -119,16 +110,11 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /*
-    Inherited, so a long URL or identifier breaks instead of escaping its
-    container. pre is unaffected: white-space: pre forbids wrapping anyway.
-  */
   overflow-wrap: break-word;
 }
 
 ::selection { background: var(--accent-soft); }
 
-/* Offscreen until focused, so keyboard users can jump the header. */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -189,7 +175,7 @@ body {
 .site-header-inner {
   max-width: var(--max);
   margin-inline: auto;
-  min-height: var(--header-h); /* the value other offsets derive from */
+  min-height: var(--header-h);
   padding-inline: var(--pad-x);
   display: flex;
   align-items: center;
@@ -242,10 +228,7 @@ h4 { font-size: 1rem; margin: 1.75rem 0 0.4rem; }
 p, ul, ol { margin: 0 0 1.15rem; }
 li { margin: 0.2rem 0; }
 
-/*
-  Underlined by default: colour alone isn't enough to mark a link. Site chrome
-  (nav, TOC, brand, annotation squares) opts out with its own text-decoration.
-*/
+/* Color alone isn't enough; site chrome opts out with its own text-decoration. */
 a {
   color: var(--accent);
   text-decoration: underline;
@@ -297,7 +280,7 @@ pre {
 }
 pre code { background: none; padding: 0; }
 
-/* Token classes the build swaps in for Typst's inline colours. */
+/* Token classes the build swaps in for Typst's inline colors. */
 .tok-kw    { color: var(--tok-kw); }
 .tok-fn    { color: var(--tok-fn); }
 .tok-str   { color: var(--tok-str); }
@@ -366,10 +349,6 @@ button:active { transform: translateY(1px); }
   font-size: 1.1rem;
   line-height: 1.3;
 }
-/*
-  Start each item where its text looks like it starts, not where its line box
-  does.
-*/
 @supports (text-box-trim: trim-start) {
   .post-title { text-box-trim: trim-start; text-box-edge: cap alphabetic; }
 }
@@ -393,7 +372,6 @@ button:active { transform: translateY(1px); }
 .post-desc { margin: 0.5rem 0 0; color: var(--muted); }
 .more-posts { margin: 1.25rem 0 0; font-size: 0.95rem; }
 
-/* Heading anchors clear the sticky header when jumped to. */
 :is(h1, h2, h3, h4)[id] { scroll-margin-top: var(--below-header); }
 
 /* #endregion */
