@@ -2,14 +2,14 @@
 #show: blog
 
 #meta(
-  title: "Draft: How this site is built",
-  date: "2026-08-06",
+  title: "How this site is built",
+  date: "2026-08-11",
   desc: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
 )
 
 #title()
 
-This site is primarily written in #link("https://typst.app")[Typst], a markup language that can be used as an alternative to Latex, Markdown, or AsciiDoc. I've been meaning to make my own static site generator based on Typst for a very long time, essentially ever since the Typst developers started teasing HTML export. Now HTML export is available (in an experimental capacity), and I've finally found the time and motivation to get my own domain and build everything out.
+This site is primarily written in #link("https://typst.app")[Typst], a markup language that can be used as an alternative to LaTeX, Markdown, or AsciiDoc. I've been meaning to make my own static site generator based on Typst for a very long time, essentially ever since the Typst developers started teasing HTML export. Now HTML export is available (in an experimental capacity), and I've finally found the time and motivation to get my own domain and build everything out.
 
 = Why Typst?
 
@@ -55,7 +55,7 @@ The core conceit of Typst is that it is both a simple markup language and an erg
   #fib(24).map(x => str(x)).join(" ")
 ]
 
-Typst's ergonomics are especially apparent if you have extensive experience writing Latex documents. If you've used Latex before, at some point it probably felt arcane or confusing. Often, if you had a specific use case, you'd find whatever package you needed, figure out its API, and move on. But how did that package actually work? What are the actual fundamentals of Latex programming that would allow you to write your own packages? I was usually too intimidated and time-constrained as a student to bother with finding the answer to those questions. But Typst felt different. It is so simple as to invite you to try writing your own packages.
+Typst's ergonomics are especially apparent if you have extensive experience writing LaTeX documents. If you've used LaTeX before, at some point it probably felt arcane or confusing. Often, if you had a specific use case, you'd find whatever package you needed, figure out its API, and move on. But how did that package actually work? What are the actual fundamentals of LaTeX programming that would allow you to write your own packages? I was usually too intimidated and time-constrained as a student to bother with finding the answer to those questions. But Typst felt different. It is so simple as to invite you to try writing your own packages.
 
 And I did! My first Typst project was a #link("https://gist.github.com/platformer/6b4504608969cfebff46ddcfbc18c537")[homework template]#annotation[There have been many Typst versions since I last used this, so it's likely severely outdated. Use at your own peril.] that I used for every class that would allow me, and I convinced all of two people to use it as well. My biggest contribution to the Typst community was a #link("https://typst.app/universe/package/algo")[package for displaying algorithms] that I also used quite extensively.#annotation[I confess this package has been unmaintained for a while. If you actually need a Typst package for algorithms, I encourage you to research #link("https://typst.app/universe/search/?q=algorithm&kind=packages")[alternatives]. I still intend to revisit this package whenever Typst implements first-class user-defined elements.]
 
@@ -92,8 +92,8 @@ I called the `meta` helper at the top of this document:
 
 ```typ
 #meta(
-  title: "Draft: How this site is built",
-  date: "2026-08-06",
+  title: "How this site is built",
+  date: "2026-08-11",
   desc: "Typst source, a few hundred lines of TypeScript, and a metadata channel that ties them together.",
 )
 ```
@@ -104,7 +104,7 @@ And the site generator queries the `<page-meta>` label:
 typst eval --target html --in page.typ 'query(<page-meta>).map(it => it.value)'
 ```
 
-It uses the collected info to populate this page's `<head>`, as well as the blurb you see for each post listed on the main #page-link("/content/blog/index.typ")[Blog page].
+It uses the collected info to populate this page's `<head>`, as well as the blurb you see for each post listed on the #page-link("/content/blog/index.typ")[Blog page].
 
 With this little trick, the SSG can add special handling for frontmatter, embedded scripts, stylesheets, and any other magical patterns I choose to implement:
 
@@ -114,9 +114,31 @@ With this little trick, the SSG can add special handling for frontmatter, embedd
 #let head(tag, ..attrs) = [#metadata((tag: tag, attrs: attrs.named()))<head-tag>]
 ```
 
+= What the generator does
+
+A build starts with two invocations of the Typst CLI:
+
++ `typst eval` to read my site config, which holds things like the site name and the nav links.
++ Another `typst eval` to verify that my internal links are all correct. I do some string transformation wherever necessary to make sure references to a `.typ` file correctly map to a URL.
+
+Next, there's one `typst eval` per blog post to populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#annotation[This likely won't be necessary whenever Typst adds a function for directory walking.]
+
+Every `.typ` file then needs:
+
++ `typst compile --format html` to get HTML output.
++ `typst eval` to retrieve metadata tags (though blog posts already had this done in the previous step).
+
+Then the SSG takes the `<body>` out of the HTML output, resolves/copies any scripts and stylesheets, tacks on the `<head>`, and writes the rendered file.
+
+That's really the crux of it. There are other minor details, like deduplicating stylesheet references as necessary, and overwriting Typst's default styling for syntax tokens in code blocks, but the overall process is straightforward. The whole build script is about 400 lines, so I'm reasonably impressed with how small it ended up being.
+
+With the SSG in place, I was able to create some common UI components to help me write these blog posts.
+
 = Components
 
-I've defined some common components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package, which allows me to conveniently style them with Typst's built-in `set` and `show` rules.#annotation[Typst doesn't currently support applying `set` and `show` rules to user-defined functions out of the box, so the Elembic package provides a workaround. It is a planned feature though, and I'll probably replace the package with a native solution once it's available.]
+I defined my components using the #link("https://typst.app/universe/package/elembic/")[Elembic] package. Typst documents primarily use `set` and `show` rules to style elements or set default values. However, Typst currently doesn't support applying these rules to user-defined functions. Elembic provides a workaround that kinda gets you 95% of the way there.#annotation[Proper first-class user-defined elements that support `set` and `show` rules is a planned feature though, and I'll probably replace Elembic with a native solution once it's available.] That being said, since most of my styling lives in a dedicated CSS file, I mostly leverage Elembic to denote the default state of some elements, such as making detail panels start out collapsed.
+
+I'm still experimenting with how I want to divide my setup between pure Typst code and CSS, but I'm satisfied with how things look so far.
 
 == Callouts
 
@@ -193,7 +215,6 @@ The implementation for these is a bit more involved. To collect all the annotati
   let hi = query(selector(<ann-note>).before(me)).len()
 
   if hi > lo {
-    _uses-css
     // get annotations in current section
     let notes = query(<ann-note>).slice(lo, hi)
 
@@ -255,24 +276,6 @@ raw(read("/lib/scrollspy.ts"), lang: "inline-script")
 ```
 
 Plus, the cute boat animation on my #page-link("/content/index.typ")[home page] was also implemented via this method.
-
-= What the generator does
-
-A build starts with two invocations of the Typst CLI:
-
-+ `typst eval` to read my site config, which holds things like the site name and the nav links.
-+ Another `typst eval` to verify that my internal links are all correct. I do some string transformation wherever necessary to make sure references to a `.typ` file correctly map to a URL.
-
-Then one `typst eval` per blog post to populate a `posts.json` file. The contents of this file are referenced on pages that render a list of posts.#annotation[This likely won't be necessary whenever Typst adds a function for directory walking.]
-
-Every `.typ` file then needs:
-
-+ `typst compile --format html` to get HTML output.
-+ `typst eval` to retrieve metadata tags, though blog posts already had this done in the previous step.
-
-Then the SSG takes the `<body>` out of the HTML output, resolves/copies any scripts and stylesheets, tacks on the `<head>`, and writes the rendered file.
-
-That's really the crux of it. There are other minor details, like deduplicating stylesheet references as necessary, and overwriting Typst's default styling for syntax tokens in code blocks, but the overall process is straightforward. The whole build script is about 400 lines, so I'm reasonably impressed with how small it ended up being.
 
 = Worth it?
 
