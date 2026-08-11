@@ -102,6 +102,12 @@ html {
   font-size: var(--root-size);
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /*
+    Reserve the scrollbar's width even on pages short enough not to need one.
+    Otherwise the centred column, header included, shifts by half a scrollbar
+    between a long page and a short one. No effect where scrollbars overlay.
+  */
+  scrollbar-gutter: stable;
 }
 
 body {
