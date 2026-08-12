@@ -119,10 +119,6 @@ body {
   overflow-wrap: break-word;
 }
 
-::selection {
-  background: var(--accent-soft);
-}
-
 .skip-link {
   position: absolute;
   left: -9999px;
