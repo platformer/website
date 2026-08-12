@@ -1,10 +1,8 @@
 /* #region tokens */
 /* palette */
 :root {
-  --c-amber: #f1c40f;
   --c-paprika: #be5532;
   --c-blue: #0076d1;
-  --c-ink: #02020b;
   --c-green: #04724d;
 }
 
@@ -49,7 +47,6 @@
   --toc-w: 11rem; /* margin sidebar; feeds the TOC breakpoint */
   --ann-w: 13rem; /* annotation column in the right margin */
   --gap: 1.25rem;
-  --gap-sm: 0.85rem;
   --radius: 10px;
   --radius-sm: 6px;
   --below-header: calc(var(--header-h) + var(--gap));
