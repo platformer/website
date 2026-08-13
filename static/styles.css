@@ -152,6 +152,13 @@ body {
   --seam-at: 50%; /* where the blue gives way, along the gradient line */
   --spread: 1; /* multiplier on the dither band's width */
   --sq: 4px;
+  /*
+    The band widens with the header and would eventually reach the nav, so cap
+    it at ~40% of the reading column. Lengths are along the gradient line, which
+    is 45deg, so a horizontal span is 1.414x these.
+  */
+  --band-far: calc(var(--max) * 0.14);
+  --band-near: calc(var(--max) * 0.065);
   background: linear-gradient(
     var(--seam),
     var(--c-blue) 0 var(--seam-at),
@@ -176,15 +183,15 @@ body {
   background-image: conic-gradient(var(--c-blue) 0 25%, #0000 0 50%, var(--c-blue) 0 75%, #0000 0);
   -webkit-mask: linear-gradient(
     var(--seam),
-    #0000 calc(var(--seam-at) - (6% * var(--spread))),
+    #0000 calc(var(--seam-at) - min(6% * var(--spread), var(--band-near))),
     #000 var(--seam-at),
-    #0000 calc(var(--seam-at) + (13% * var(--spread)))
+    #0000 calc(var(--seam-at) + min(13% * var(--spread), var(--band-far)))
   );
   mask: linear-gradient(
     var(--seam),
-    #0000 calc(var(--seam-at) - (6% * var(--spread))),
+    #0000 calc(var(--seam-at) - min(6% * var(--spread), var(--band-near))),
     #000 var(--seam-at),
-    #0000 calc(var(--seam-at) + (13% * var(--spread)))
+    #0000 calc(var(--seam-at) + min(13% * var(--spread), var(--band-far)))
   );
 }
 .site-header::after {
@@ -192,15 +199,15 @@ body {
   background-position: var(--sq) 0;
   -webkit-mask: linear-gradient(
     var(--seam),
-    #0000 calc(var(--seam-at) - (13% * var(--spread))),
+    #0000 calc(var(--seam-at) - min(13% * var(--spread), var(--band-far))),
     #000 var(--seam-at),
-    #0000 calc(var(--seam-at) + (6% * var(--spread)))
+    #0000 calc(var(--seam-at) + min(6% * var(--spread), var(--band-near)))
   );
   mask: linear-gradient(
     var(--seam),
-    #0000 calc(var(--seam-at) - (13% * var(--spread))),
+    #0000 calc(var(--seam-at) - min(13% * var(--spread), var(--band-far))),
     #000 var(--seam-at),
-    #0000 calc(var(--seam-at) + (6% * var(--spread)))
+    #0000 calc(var(--seam-at) + min(6% * var(--spread), var(--band-near)))
   );
 }
 
